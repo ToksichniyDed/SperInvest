@@ -1,0 +1,12 @@
+# ninja log v5
+8	449	7076962168884547	D:/diplom/SperInvest/client/build-Client_App-Desktop_Qt_6_5_1_MSVC2019_64bit-Debug/Client_App_autogen/timestamp	e5d4b62ede85e890
+8	449	7076962168884547	Client_App_autogen/timestamp	e5d4b62ede85e890
+8	449	7076962168884547	Client_App_autogen/mocs_compilation.cpp	e5d4b62ede85e890
+8	449	7076962168884547	D:/diplom/SperInvest/client/build-Client_App-Desktop_Qt_6_5_1_MSVC2019_64bit-Debug/Client_App_autogen/mocs_compilation.cpp	e5d4b62ede85e890
+995	4776	7075840610911327	CMakeFiles/Client_App.dir/main.cpp.obj	fd526ca596842c8b
+464	3724	7076962201595884	CMakeFiles/Client_App.dir/registration_window.cpp.obj	ef46ecb8537fb0aa
+3725	4080	7076962204541782	Client_App.exe	b516f55a5c9e57ba
+1129	5592	7076090318240495	CMakeFiles/Client_App.dir/sperinvestwindow.cpp.obj	dece52715bbbcb44
+839	3990	7076954121802909	CMakeFiles/Client_App.dir/Client_App_autogen/mocs_compilation.cpp.obj	2ae33ef74a3fb87d
+491	4059	7076954366155182	CMakeFiles/Client_App.dir/client.cpp.obj	4badc9a6888dd29d
+1013	4662	7076393552301803	CMakeFiles/Client_App.dir/enter_window.cpp.obj	541329cbaf1a1cd5
