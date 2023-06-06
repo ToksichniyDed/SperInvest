@@ -18,15 +18,17 @@ void create_account::check_create_acc_data()
 {
     // Получение доступа к элементам формы
     QLineEdit* Acc_nameField = findChild<QLineEdit*>("account_name");
-    QLineEdit* CurrencyField = findChild<QLineEdit*>("account_currency");
+    QComboBox* CurrencyField = findChild<QComboBox*>("account_currency");
     QLineEdit* StartBalanceField = findChild<QLineEdit*>("start_balance");
-    QLineEdit* TariffPlanField = findChild<QLineEdit*>("tariff_plan");
+    QComboBox* TariffPlanField = findChild<QComboBox*>("tariff_plan");
 
     // Получение значений полей
     QString acc_name = Acc_nameField->text();
-    QString currency = CurrencyField->text();
+    QString currency = CurrencyField->currentText();
     QString startbalance = StartBalanceField->text();
-    QString tariffplan = TariffPlanField->text();
+    QString tariffplan = TariffPlanField->currentText();
+
+
 
     if(acc_name.isEmpty() ||currency.isEmpty() || startbalance.isEmpty() || tariffplan.isEmpty())
     {
@@ -34,6 +36,10 @@ void create_account::check_create_acc_data()
     }
     else
     {
+        if(startbalance.toInt()<0)
+            QMessageBox::critical(this, "Ошибка", "Баланс не может быть отрицательным");
+        else
+        {
         // Создание объекта с данными
         QJsonObject dataObject;
         dataObject["acc_name"] = acc_name;
@@ -42,6 +48,7 @@ void create_account::check_create_acc_data()
         dataObject["tariffplan"] = tariffplan;
 
         c_client->Create_Acc_WindowSubmit(dataObject);
+        }
     }
 }
 

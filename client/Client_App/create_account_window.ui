@@ -51,6 +51,41 @@
       <property name="editable">
        <bool>false</bool>
       </property>
+      <item>
+       <property name="text">
+        <string>RUB</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>USD</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>EUR</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>GBP</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>CNY</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>INR</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string/>
+       </property>
+      </item>
      </widget>
     </item>
     <item>
@@ -71,7 +106,28 @@
      </widget>
     </item>
     <item>
-     <widget class="QComboBox" name="tariff_plan"/>
+     <widget class="QComboBox" name="tariff_plan">
+      <item>
+       <property name="text">
+        <string>Базовый тариф</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Продвинутый тариф</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Премиум тариф</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Тариф &quot;Начинающий&quot;</string>
+       </property>
+      </item>
+     </widget>
     </item>
    </layout>
   </widget>

@@ -93,10 +93,8 @@ void ClientHandler::readClientData()
     }
     else
     {
-        // Обработка других типов сообщений
+        this->sendMessage("Data delivered succesfully!");
     }
-    this->sendMessage("Data delivered succesfully!");
-
 }
 
 void ClientHandler::clientDisconnected()

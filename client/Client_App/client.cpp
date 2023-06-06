@@ -69,7 +69,7 @@ void Client::readServerData()
     }
     else
     {
-        // Обработка других типов сообщений
+        qDebug()<<"Recieve from server!";
     }
 
 }

@@ -47,7 +47,7 @@ void Server::handleNewConnection()
     // Подключаем сигналы и слоты
     connect(clientHandler, &ClientHandler::sendRegDataToServer, this, &Server::registrationClientData);//Получение регистрационных данных
     connect(clientHandler,&ClientHandler::sendLogDataToServer,this,&Server::loginClientData);// Получение авторизационных данных
-    connect(clientHandler,&ClientHandler::sendCreate_Acc_DataToServer,this,&Server::loginClientData);// Получение данных для создания счета
+    connect(clientHandler,&ClientHandler::sendCreate_Acc_DataToServer,this,&Server::Create_Acc_ClientData);// Получение данных для создания счета
     connect(clientThread, &QThread::finished, clientThread, &QThread::deleteLater);
     connect(this, &Server::receiveLogDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения авторизации
     connect(this, &Server::receiveRegDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения регистрации
@@ -63,6 +63,7 @@ void Server::handleNewConnection()
 
 void Server::registrationClientData(const QByteArray& data)
 {
+
     QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
     if (!jsonDoc.isNull()) {
         if (jsonDoc.isObject()) {
@@ -194,7 +195,7 @@ void Server::Create_Acc_ClientData(const QByteArray& data)
 
         // Создаем SQL-запрос для добавления данных
         QSqlQuery query;
-        query.prepare("INSERT INTO investment_accounts (account_id, account_name,account_balance,currency,open_date,status,user_id,created_at,tariff_plan)" "VALUE (:account_id, :account_name, :account_balance, :currency, :open_date, :status, :user_id, :created_at,:tariff_plan)");
+        query.prepare("INSERT INTO investment_accounts (account_id, account_name,account_balance,currency,open_date,status,user_id,created_at,tariff_plan)" "VALUES (:account_id, :account_name, :account_balance, :currency, :open_date, :status, :user_id, :created_at,:tariff_plan)");
 
         QString uuid = QUuid::createUuid().toString();
         uuid = uuid.mid(1, 36);
@@ -203,8 +204,8 @@ void Server::Create_Acc_ClientData(const QByteArray& data)
         query.bindValue(":account_name", d_acc_name);
         query.bindValue(":account_balance", d_startbalance);
         query.bindValue(":currency", d_currency);
-        query.bindValue(":open_date", QDateTime::currentDateTime());
-        query.bindValue(":status", true);
+        query.bindValue(":open_date", QDate::currentDate());
+        query.bindValue(":status", "Active");
         query.bindValue(":created_at", QDateTime::currentDateTime());
         query.bindValue(":user_id", d_user_id);
         query.bindValue(":tariff_plan", d_tariffplan);
@@ -214,6 +215,18 @@ void Server::Create_Acc_ClientData(const QByteArray& data)
             QJsonObject rec;
             rec["type"]= "acc";
             rec["data"]= "Успешное создание счета";
+
+            QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
+            QString message = QString::fromUtf8(byte_rec_log_data);
+
+            emit receiveAccDataFromServer(message);
+        }
+        else
+        {
+            qDebug() << "Data inserted failed.";
+            QJsonObject rec;
+            rec["type"]= "acc";
+            rec["data"]= "Неудачное создание счета";
 
             QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
             QString message = QString::fromUtf8(byte_rec_log_data);

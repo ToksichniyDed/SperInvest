@@ -10,6 +10,7 @@
 #include <QSqlError>
 #include <QUuid>
 #include <QDateTime>
+#include <QDate>
 
 #include "clienthandler.h"
 #include "connect_to_data_base.h"
@@ -24,6 +25,7 @@ public:
     void handleNewConnection();
     void registrationClientData(const QByteArray& data);
     void loginClientData(const QByteArray& data);
+    void Create_Acc_ClientData(const QByteArray& data);
 
 
 private:
@@ -32,6 +34,7 @@ private:
 signals:
     void receiveLogDataFromServer(const QString& message);
     void receiveRegDataFromServer(const QString& message);
+    void receiveAccDataFromServer(const QString& message);
 };
 
 #endif // SERVER_H
