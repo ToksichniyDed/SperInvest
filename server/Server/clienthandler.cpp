@@ -70,6 +70,27 @@ void ClientHandler::readClientData()
             emit sendLogDataToServer(jsonData);
         }
     }
+    else if(messageType == "acc")
+    {
+        QString userId = messageData["user_id"].toString();
+        QJsonValue dataValue = messageData["data"];
+
+        if (dataValue.isObject())
+        {
+            QJsonObject dataObject = dataValue.toObject();
+
+            // Создаем новый объект JSON для объединения user_id и data
+            QJsonObject combinedData;
+            combinedData["user_id"] = userId;
+            combinedData["data"] = dataObject;
+
+            // Преобразуем объединенные данные в QByteArray
+            QJsonDocument jsonDoc(combinedData);
+            QByteArray jsonData = jsonDoc.toJson();
+
+            emit sendCreate_Acc_DataToServer(jsonData);
+        }
+    }
     else
     {
         // Обработка других типов сообщений

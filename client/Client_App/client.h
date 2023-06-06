@@ -19,6 +19,7 @@ public:
     void sendMessage(const QString& message);//функция отправки данных на сервер
     void registrationWindowSubmit(const QJsonObject& data);//получение данных из формы регистрации
     void enterWindowSubmit(const QJsonObject& data);//получение данных из формы входа
+    void Create_Acc_WindowSubmit(const QJsonObject& data);//получение данных из формы создания счета
 
 private slots:
     void readServerData();
@@ -29,6 +30,7 @@ signals:
     void close_enter_window();
     void access_denied_enter_window();
     void rec_reg_window(QString messege);
+    void close_create_acc_window(QString message);
 
 private:
     QTcpSocket* tcpSocket;

@@ -20,7 +20,7 @@ public:
 private:
     Ui::SperInvestWindow *ui;
     Client* s_client;
-    QString* em_user_id;
+    QString* sm_user_id;
 
 };
 

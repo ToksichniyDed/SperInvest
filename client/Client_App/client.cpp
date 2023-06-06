@@ -50,7 +50,10 @@ void Client::readServerData()
     else if (messageType == "log")
     {
         if(dataValue == true)
+        {
             emit close_enter_window();
+            m_user_id = messageData["user_id"].toString();
+        }
         else
             emit access_denied_enter_window();
     }
@@ -58,6 +61,11 @@ void Client::readServerData()
     {
         QString message = dataValue.toString();
         emit rec_reg_window(message);
+    }
+    else if(messageType == "acc")
+    {
+        QString message = dataValue.toString();
+        emit close_create_acc_window(message);
     }
     else
     {
@@ -71,6 +79,21 @@ void Client::registrationWindowSubmit(const QJsonObject& data)
     // Добавляем тип данных "reg" в объект JSON
     QJsonObject messageData;
     messageData["type"] = "reg";
+    messageData["data"] = data;
+
+    // Преобразование объекта в строку JSON
+    QJsonDocument jsonDoc(messageData);
+    QString jsonData = jsonDoc.toJson();
+
+    this->sendMessage(jsonData);
+}
+
+void Client::Create_Acc_WindowSubmit(const QJsonObject& data)
+{
+    // Добавляем тип данных "acc" в объект JSON
+    QJsonObject messageData;
+    messageData["type"] = "acc";
+    messageData["user_id"] = m_user_id;
     messageData["data"] = data;
 
     // Преобразование объекта в строку JSON

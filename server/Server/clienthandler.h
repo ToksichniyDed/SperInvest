@@ -27,6 +27,7 @@ private:
 signals:
     void sendRegDataToServer(const QByteArray& data);
     void sendLogDataToServer(const QByteArray& data);
+    void sendCreate_Acc_DataToServer(const QByteArray& data);
 };
 
 #endif // CLIENTHANDLER_H
