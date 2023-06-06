@@ -6,12 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>640</width>
-    <height>480</height>
+    <width>701</width>
+    <height>475</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>701</width>
+    <height>475</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>SperInvest</string>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
   </property>
   <property name="tabPosition">
    <enum>QTabWidget::South</enum>
@@ -19,78 +28,124 @@
   <property name="currentIndex">
    <number>0</number>
   </property>
-  <widget class="QWidget" name="tab">
+  <widget class="QWidget" name="Main">
    <attribute name="title">
     <string>Главная</string>
    </attribute>
-   <widget class="QTextEdit" name="textEdit">
-    <property name="geometry">
-     <rect>
-      <x>150</x>
-      <y>20</y>
-      <width>471</width>
-      <height>31</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QScrollArea" name="scrollArea">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>70</y>
-      <width>120</width>
-      <height>321</height>
-     </rect>
-    </property>
-    <property name="widgetResizable">
-     <bool>true</bool>
-    </property>
-    <widget class="QWidget" name="scrollAreaWidgetContents">
-     <property name="geometry">
-      <rect>
-       <x>0</x>
-       <y>0</y>
-       <width>118</width>
-       <height>319</height>
-      </rect>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QScrollArea" name="scrollArea_2">
-    <property name="geometry">
-     <rect>
-      <x>149</x>
-      <y>69</y>
-      <width>471</width>
-      <height>321</height>
-     </rect>
-    </property>
-    <property name="widgetResizable">
-     <bool>true</bool>
-    </property>
-    <widget class="QWidget" name="scrollAreaWidgetContents_2">
-     <property name="geometry">
-      <rect>
-       <x>0</x>
-       <y>0</y>
-       <width>469</width>
-       <height>319</height>
-      </rect>
-     </property>
-    </widget>
-   </widget>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="3" colspan="2">
+     <widget class="QLineEdit" name="accounts_balance">
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1" colspan="2">
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>Баланс по счетам:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="5">
+     <widget class="QLineEdit" name="current_balance">
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label_3">
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Инвестиционные счета&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2" colspan="2">
+     <widget class="QLineEdit" name="current_account">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>Счет:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QScrollArea" name="exchange_accounts">
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>144</width>
+         <height>343</height>
+        </rect>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout"/>
+      </widget>
+     </widget>
+    </item>
+    <item row="1" column="4">
+     <widget class="QLabel" name="label_4">
+      <property name="text">
+       <string>Деньги и Акции на текущем счету:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QPushButton" name="push_account">
+      <property name="text">
+       <string>+Создать новый счет</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1" rowspan="2" colspan="5">
+     <widget class="QScrollArea" name="exchange_traded_assets">
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents_2">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>523</width>
+         <height>373</height>
+        </rect>
+       </property>
+      </widget>
+     </widget>
+    </item>
+   </layout>
   </widget>
-  <widget class="QWidget" name="tab_2">
+  <widget class="QWidget" name="News">
    <attribute name="title">
     <string>Новости</string>
    </attribute>
   </widget>
-  <widget class="QWidget" name="tab_3">
+  <widget class="QWidget" name="Exchange">
    <attribute name="title">
     <string>Биржа</string>
    </attribute>
   </widget>
-  <widget class="QWidget" name="tab_4">
+  <widget class="QWidget" name="Other">
+   <property name="minimumSize">
+    <size>
+     <width>695</width>
+     <height>447</height>
+    </size>
+   </property>
    <attribute name="title">
     <string>Прочее</string>
    </attribute>

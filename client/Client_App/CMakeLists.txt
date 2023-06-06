@@ -15,15 +15,23 @@ find_package(Qt6 COMPONENTS Network REQUIRED)
 
 set(PROJECT_SOURCES
     main.cpp
+    #Главное окно приложения
     sperinvestwindow.cpp
     sperinvestwindow.h
     sperinvestwindow.ui
+    #Окно авторизации
     enter_window.ui
     enter_window.h
     enter_window.cpp
+    #Окно регистрации
     registration_window.h
     registration_window.cpp
     registration_window.ui
+    #Окно создания счета
+    create_account.h
+    create_account.cpp
+    create_account_window.ui
+    #Клиентская часть
     client.h
     client.cpp
 )

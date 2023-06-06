@@ -32,6 +32,8 @@ signals:
 
 private:
     QTcpSocket* tcpSocket;
+    QString m_user_id;
+
 };
 
 #endif // CLIENT_H

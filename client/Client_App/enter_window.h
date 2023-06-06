@@ -25,6 +25,7 @@ public:
 private:
     Ui::enter_window *ui;
     Client* e_client;
+    QString* em_user_id;
 };
 
 #endif // ENTER_WINDOW_H
