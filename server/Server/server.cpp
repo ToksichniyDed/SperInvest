@@ -1,4 +1,4 @@
-#include "server.h"
+ #include "server.h"
 
 Server::Server(QObject *parent) : QObject(parent)
 {
@@ -44,21 +44,31 @@ void Server::handleNewConnection()
     // Перемещаем экземпляр ClientHandler в поток clientThread
     clientHandler->moveToThread(clientThread);
 
-    // Подключаем сигналы и слоты
-    connect(clientHandler, &ClientHandler::sendRegDataToServer, this, &Server::registrationClientData);//Получение регистрационных данных
-    connect(clientHandler,&ClientHandler::sendLogDataToServer,this,&Server::loginClientData);// Получение авторизационных данных
-    connect(clientHandler,&ClientHandler::sendCreate_Acc_DataToServer,this,&Server::Create_Acc_ClientData);// Получение данных для создания счета
-    connect(clientThread, &QThread::finished, clientThread, &QThread::deleteLater);
-    connect(this, &Server::receiveLogDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения авторизации
-    connect(this, &Server::receiveRegDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения регистрации
-    connect(this, &Server::receiveAccDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения создания счета
-
+    this->Connections_Signals(clientHandler, clientThread);
 
     // Запускаем поток clientThread
     clientThread->start();
 
     // Вызываем метод setSocket у clientHandler в его потоке
     //QMetaObject::invokeMethod(clientHandler, "setSocket", Qt::QueuedConnection, Q_ARG(QTcpSocket*, clientSocket));
+}
+
+void Server::Connections_Signals(ClientHandler* clientHandler, QThread* clientThread)
+{
+    // Подключаем сигналы и слоты на получение данных
+    connect(clientHandler, &ClientHandler::sendRegDataToServer, this, &Server::registrationClientData);//Получение регистрационных данных
+    connect(clientHandler,&ClientHandler::sendLogDataToServer,this,&Server::loginClientData);// Получение авторизационных данных
+    connect(clientHandler,&ClientHandler::sendCreate_Acc_DataToServer,this,&Server::Create_Acc_ClientData);// Получение данных для создания счета
+    connect(clientHandler,&ClientHandler::update_accounts_data,this,&Server::Send_Accounts_Data);//Обновление информации о счетах
+
+    connect(clientThread, &QThread::finished, clientThread, &QThread::deleteLater);
+
+    // Подключаем сигналы и слоты на отправку данных
+    connect(this, &Server::receiveLogDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения авторизации
+    connect(this, &Server::receiveRegDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения регистрации
+    connect(this, &Server::receiveAccDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения создания счета
+    connect(this, &Server::send_accounts_data, clientHandler, &ClientHandler::sendMessage);// Отправка данных о счете
+    connect(this,&Server::set_ID,clientHandler,&ClientHandler::set_Id);//Установка user_id
 }
 
 void Server::registrationClientData(const QByteArray& data)
@@ -157,10 +167,14 @@ void Server::loginClientData(const QByteArray& data)
                 if (count > 0) {
                     // Пользователь существует
                     access = true;
+
+                    // Сохраняем user_id пользователя
                     query.prepare("SELECT user_id FROM users WHERE email = :email");
                     query.bindValue(":email", d_email);
                     if (query.exec() && query.next())
                         user_id = query.value(0).toString();
+                    emit set_ID(user_id);
+                    this->Send_Main_Data_To_Client(user_id);
                 }
             }
         }
@@ -234,5 +248,59 @@ void Server::Create_Acc_ClientData(const QByteArray& data)
             emit receiveAccDataFromServer(message);
         }
     }
-
 }
+
+void Server::Send_Main_Data_To_Client(const QString& user_id)
+{
+    this->Send_Accounts_Data(user_id);
+}
+
+void Server::Send_Accounts_Data(const QString& user_id)
+{
+    QSqlQuery query;
+    query.prepare("SELECT * FROM investment_accounts WHERE user_id = :user_id");
+    query.bindValue(":user_id", user_id);
+
+    if (query.exec()) {
+        QJsonArray accountArray;
+
+        while (query.next()) {
+            QJsonObject accountObject;
+            accountObject["account_id"] = query.value("account_id").toString();
+            accountObject["account_name"] = query.value("account_name").toString();
+            accountObject["account_balance"] = query.value("account_balance").toString();
+            accountObject["currency"] = query.value("currency").toString();
+            accountObject["open_date"] = query.value("open_date").toString();
+            accountObject["status"] = query.value("status").toString();
+            accountObject["created_at"] = query.value("created_at").toString();
+            accountObject["tariff_plan"] = query.value("tariff_plan").toString();
+
+            accountArray.append(accountObject);
+        }
+
+        // Создаем общий объект JSON для отправки
+        QJsonObject dataObject;
+        dataObject["type"]="show_acc";
+        dataObject["data"] = QJsonValue(accountArray);
+
+        // Преобразуем объект JSON в строку
+        QJsonDocument jsonDoc(dataObject);
+        QString jsonData = jsonDoc.toJson();
+
+        emit send_accounts_data(jsonData);
+    }
+    else {
+        qDebug() << "Error executing SQL query: " << query.lastError().text();
+
+        QJsonObject dataObject;
+        dataObject["type"]="show_acc";
+        dataObject["data"] = "";
+
+        // Преобразуем объект JSON в строку
+        QJsonDocument jsonDoc(dataObject);
+        QString jsonData = jsonDoc.toJson();
+
+        emit send_accounts_data(jsonData);
+    }
+}
+

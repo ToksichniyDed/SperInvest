@@ -7,6 +7,7 @@
 #include <QMetaObject>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QSqlError>
 #include <QUuid>
 #include <QDateTime>
@@ -23,10 +24,12 @@ public:
     ~Server();
     void start();
     void handleNewConnection();
+    void Connections_Signals(ClientHandler* clientHandler,QThread* clientThrea);
     void registrationClientData(const QByteArray& data);
     void loginClientData(const QByteArray& data);
     void Create_Acc_ClientData(const QByteArray& data);
-
+    void Send_Main_Data_To_Client(const QString& user_id);
+    void Send_Accounts_Data(const QString& user_id);
 
 private:
     QTcpServer *tcpServer;
@@ -35,6 +38,9 @@ signals:
     void receiveLogDataFromServer(const QString& message);
     void receiveRegDataFromServer(const QString& message);
     void receiveAccDataFromServer(const QString& message);
+
+    void send_accounts_data(const QString& message);
+    void set_ID(const QString& user_id);
 };
 
 #endif // SERVER_H

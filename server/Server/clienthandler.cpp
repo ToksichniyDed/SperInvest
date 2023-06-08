@@ -72,7 +72,6 @@ void ClientHandler::readClientData()
     }
     else if(messageType == "acc")
     {
-        QString userId = messageData["user_id"].toString();
         QJsonValue dataValue = messageData["data"];
 
         if (dataValue.isObject())
@@ -81,7 +80,7 @@ void ClientHandler::readClientData()
 
             // Создаем новый объект JSON для объединения user_id и data
             QJsonObject combinedData;
-            combinedData["user_id"] = userId;
+            combinedData["user_id"] = m_user_id;
             combinedData["data"] = dataObject;
 
             // Преобразуем объединенные данные в QByteArray
@@ -90,6 +89,10 @@ void ClientHandler::readClientData()
 
             emit sendCreate_Acc_DataToServer(jsonData);
         }
+    }
+    else if(messageType == "update_acc")
+    {
+        emit update_accounts_data(m_user_id);
     }
     else
     {
@@ -111,3 +114,7 @@ void ClientHandler::clientDisconnected()
     this->deleteLater();
 }
 
+void ClientHandler::set_Id(const QString &user_id)
+{
+    m_user_id = user_id;
+}

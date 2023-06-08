@@ -3,11 +3,13 @@
 
 #include <QObject>
 #include <QTcpSocket>
-#include <QTimer>
+//#include <QTimer>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QJsonArray>
 #include <QMessageBox>
 #include <QJsonValue>
+#include <QCoreApplication>
 
 class Client : public QObject
 {
@@ -31,6 +33,8 @@ signals:
     void access_denied_enter_window();
     void rec_reg_window(QString messege);
     void close_create_acc_window(QString message);
+    void send_to_Show_Accounts(QJsonObject &accountObject);
+    void clear_accounts_window();
 
 private:
     QTcpSocket* tcpSocket;
