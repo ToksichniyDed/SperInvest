@@ -81,13 +81,23 @@ void Client::readServerData()
 
             for (const QJsonValue& accountValue : accountArray)
             {
+
                 if (accountValue.isObject())
                 {
                     QJsonObject accountObject = accountValue.toObject();
 
-                    emit send_to_Show_Accounts(accountObject);                   
+                    QString acc_id = accountObject["account_id"].toString();
+
+                    account_info acc_info(accountObject["account_id"].toString(),accountObject["account_name"].toString(),accountObject["balance"].toString(),accountObject["currency"].toString()
+                                          ,accountObject["open_date"].toString(),accountObject["status"].toString(),
+                                          accountObject["created_at"].toString(),accountObject["tariff_plan"].toString());
+
+                    account_hash.insert(acc_id,acc_info);
+
+                    emit send_to_Show_Accounts(&acc_id);
                 }
             }
+            emit send_acc_info(&account_hash);
         }
         else
         {
@@ -101,67 +111,72 @@ void Client::readServerData()
 }
 
 void Client::registrationWindowSubmit(const QJsonObject& data)
-    {
-        // Добавляем тип данных "reg" в объект JSON
-        QJsonObject messageData;
-        messageData["type"] = "reg";
-        messageData["data"] = data;
+{
+    // Добавляем тип данных "reg" в объект JSON
+    QJsonObject messageData;
+    messageData["type"] = "reg";
+    messageData["data"] = data;
 
-        // Преобразование объекта в строку JSON
-        QJsonDocument jsonDoc(messageData);
-        QString jsonData = jsonDoc.toJson();
+    // Преобразование объекта в строку JSON
+    QJsonDocument jsonDoc(messageData);
+    QString jsonData = jsonDoc.toJson();
 
-        this->sendMessage(jsonData);
-    }
+    this->sendMessage(jsonData);
+}
 
 void Client::Create_Acc_WindowSubmit(const QJsonObject& data)
-    {
-        // Добавляем тип данных "acc" в объект JSON
-        QJsonObject messageData;
-        messageData["type"] = "acc";
-        messageData["data"] = data;
+{
+    // Добавляем тип данных "acc" в объект JSON
+    QJsonObject messageData;
+    messageData["type"] = "acc";
+    messageData["data"] = data;
 
-        // Преобразование объекта в строку JSON
-        QJsonDocument jsonDoc(messageData);
-        QString jsonData = jsonDoc.toJson();
+    // Преобразование объекта в строку JSON
+    QJsonDocument jsonDoc(messageData);
+    QString jsonData = jsonDoc.toJson();
 
-        this->sendMessage(jsonData);
-    }
+    this->sendMessage(jsonData);
+}
 
 void Client::enterWindowSubmit(const QJsonObject& data)
-    {
-        // Добавляем тип данных "log" в объект JSON
-        QJsonObject messageData;
-        messageData["type"] = "log";
-        messageData["data"] = data;
+{
+    // Добавляем тип данных "log" в объект JSON
+    QJsonObject messageData;
+    messageData["type"] = "log";
+    messageData["data"] = data;
 
-        // Преобразование объекта в строку JSON
-        QJsonDocument jsonDoc(messageData);
-        QString jsonData = jsonDoc.toJson();
+    // Преобразование объекта в строку JSON
+    QJsonDocument jsonDoc(messageData);
+    QString jsonData = jsonDoc.toJson();
 
-        this->sendMessage(jsonData);
-    }
+    this->sendMessage(jsonData);
+}
 
 void Client::displayError(QAbstractSocket::SocketError socketError)
-    {
-        switch (socketError) {
-        case QAbstractSocket::RemoteHostClosedError:
-            qDebug() << "Error: The remote host closed the connection.";
-            break;
-        case QAbstractSocket::HostNotFoundError:
-            qDebug() << "Error: Host not found.";
-            break;
-        case QAbstractSocket::ConnectionRefusedError:
-            qDebug() << "Error: The connection was refused by the peer.";
-            break;
-        case QAbstractSocket::SocketTimeoutError:
-            qDebug() << "Error: Socket operation timed out.";
-            break;
-        default:
-            qDebug() << "Error: " << tcpSocket->errorString();
-            break;
-        }
+{
+    switch (socketError) {
+    case QAbstractSocket::RemoteHostClosedError:
+        qDebug() << "Error: The remote host closed the connection.";
+        break;
+    case QAbstractSocket::HostNotFoundError:
+        qDebug() << "Error: Host not found.";
+        break;
+    case QAbstractSocket::ConnectionRefusedError:
+        qDebug() << "Error: The connection was refused by the peer.";
+        break;
+    case QAbstractSocket::SocketTimeoutError:
+        qDebug() << "Error: Socket operation timed out.";
+        break;
+    default:
+        qDebug() << "Error: " << tcpSocket->errorString();
+        break;
     }
+}
+
+QHash<QString, account_info>* Client::get_acc_hash()
+{
+    return &account_hash;
+}
 
 
 

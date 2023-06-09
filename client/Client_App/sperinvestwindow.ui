@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>701</width>
+    <width>709</width>
     <height>475</height>
    </rect>
   </property>
@@ -17,6 +17,12 @@
    </size>
   </property>
   <property name="tabletTracking">
+   <bool>false</bool>
+  </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::NoContextMenu</enum>
+  </property>
+  <property name="acceptDrops">
    <bool>false</bool>
   </property>
   <property name="windowTitle">
@@ -60,17 +66,30 @@
     <string>Главная</string>
    </attribute>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="5">
-     <widget class="QLineEdit" name="current_balance">
+    <item row="1" column="4">
+     <widget class="QLabel" name="label_4">
+      <property name="text">
+       <string>Деньги и Акции на текущем счету:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="3" colspan="2">
+     <widget class="QLineEdit" name="accounts_balance">
+      <property name="text">
+       <string>0</string>
+      </property>
       <property name="readOnly">
        <bool>true</bool>
       </property>
      </widget>
     </item>
-    <item row="2" column="0">
-     <widget class="QPushButton" name="push_account">
+    <item row="1" column="5">
+     <widget class="QLineEdit" name="current_balance">
       <property name="text">
-       <string>+Создать новый счет</string>
+       <string>0</string>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
       </property>
      </widget>
     </item>
@@ -84,21 +103,11 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>149</width>
+         <width>144</width>
          <height>349</height>
         </rect>
        </property>
       </widget>
-     </widget>
-    </item>
-    <item row="1" column="2" colspan="2">
-     <widget class="QLineEdit" name="current_account">
-      <property name="text">
-       <string/>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
     <item row="0" column="1" colspan="2">
@@ -115,17 +124,10 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="4">
-     <widget class="QLabel" name="label_4">
+    <item row="2" column="0">
+     <widget class="QPushButton" name="push_account">
       <property name="text">
-       <string>Деньги и Акции на текущем счету:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="3" colspan="2">
-     <widget class="QLineEdit" name="accounts_balance">
-      <property name="readOnly">
-       <bool>true</bool>
+       <string>+Создать новый счет</string>
       </property>
      </widget>
     </item>
@@ -136,34 +138,48 @@
       </property>
      </widget>
     </item>
+    <item row="1" column="2" colspan="2">
+     <widget class="QLineEdit" name="current_account">
+      <property name="text">
+       <string>Нет активных счетов</string>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
     <item row="2" column="1" rowspan="2" colspan="5">
-     <widget class="QToolBox" name="account_info">
+     <widget class="QTabWidget" name="acc_info_tab">
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
       <property name="currentIndex">
        <number>0</number>
       </property>
-      <widget class="QWidget" name="Money">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>0</y>
-         <width>520</width>
-         <height>351</height>
-        </rect>
-       </property>
-       <attribute name="label">
-        <string>Деньги</string>
+      <property name="iconSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="tabBarAutoHide">
+       <bool>false</bool>
+      </property>
+      <widget class="QWidget" name="tab_17">
+       <attribute name="title">
+        <string>Tab 1</string>
        </attribute>
-       <widget class="QLineEdit" name="lineEdit">
+       <widget class="QLabel" name="label_5">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>10</y>
-          <width>171</width>
-          <height>21</height>
+          <x>160</x>
+          <y>150</y>
+          <width>201</width>
+          <height>20</height>
          </rect>
         </property>
-        <property name="readOnly">
-         <bool>true</bool>
+        <property name="text">
+         <string>у вас пока нет счетов</string>
         </property>
        </widget>
       </widget>

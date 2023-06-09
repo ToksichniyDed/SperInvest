@@ -31,9 +31,19 @@ set(PROJECT_SOURCES
     create_account.h
     create_account.cpp
     create_account_window.ui
+    #Виджет счетов
+    account_info_widget.h
+    account_info_widget.cpp
+    account_info_widget.ui
+    #Окно пополнения счета
+    add_money_window.h
+    add_money_window.cpp
+    add_money_window.ui
     #Клиентская часть
     client.h
     client.cpp
+    account_info.h
+    account_info.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
