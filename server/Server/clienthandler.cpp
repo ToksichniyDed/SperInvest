@@ -94,6 +94,16 @@ void ClientHandler::readClientData()
     {
         emit update_accounts_data(m_user_id);
     }
+    else if(messageType == "add_balance")
+    {
+        QJsonValue dataValue = messageData["data"];
+        if (dataValue.isObject())
+        {
+            QJsonObject dataObject = dataValue.toObject();
+            QByteArray jsonData = QJsonDocument(dataObject).toJson();
+            emit send_to_add_balance(jsonData,m_user_id);
+        }
+    }
     else
     {
         this->sendMessage("Data delivered succesfully!");
@@ -118,3 +128,4 @@ void ClientHandler::set_Id(const QString &user_id)
 {
     m_user_id = user_id;
 }
+

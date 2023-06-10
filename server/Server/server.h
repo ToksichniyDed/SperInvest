@@ -30,6 +30,7 @@ public:
     void Create_Acc_ClientData(const QByteArray& data);
     void Send_Main_Data_To_Client(const QString& user_id);
     void Send_Accounts_Data(const QString& user_id);
+    void Add_Account_Balance(const QByteArray& data, const QString user_id);
 
 private:
     QTcpServer *tcpServer;
@@ -38,6 +39,7 @@ signals:
     void receiveLogDataFromServer(const QString& message);
     void receiveRegDataFromServer(const QString& message);
     void receiveAccDataFromServer(const QString& message);
+    void receiveAddBalanceFromServer(const QString& message);
 
     void send_accounts_data(const QString& message);
     void set_ID(const QString& user_id);

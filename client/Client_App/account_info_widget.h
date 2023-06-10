@@ -3,7 +3,7 @@
 
 #include <QToolBox>
 #include <QJsonObject>
-#include <QHash>
+
 
 #include "ui_account_info_widget.h"
 #include "add_money_window.h"
@@ -19,11 +19,11 @@ class account_info_widget : public QToolBox
     Q_OBJECT
 
 public:
-    explicit account_info_widget(Client* a_client , QWidget *parent = nullptr,QHash<QString,account_info>* acc_info = nullptr);
+    explicit account_info_widget(Client* a_client , QWidget *parent = nullptr,account_info* acc_info = nullptr);
     ~account_info_widget();
 
 private:
-    QHash<QString,account_info>* acc_info;
+    account_info* acc_info;
     Client* a_client;
     Ui::account_info_widget *ui;
     void Show_Acc_Info();

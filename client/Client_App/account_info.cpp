@@ -1,7 +1,7 @@
 #include "account_info.h"
 
 account_info::account_info(QString account_id,QString account_name, QString account_balance,QString currency, QString open_date, QString status,QString created_at,QString tariff_plan)
-    :account_id(account_id), account_balance(account_balance),currency(currency),open_date(open_date),status(status),created_at(created_at),tariff_plan(tariff_plan)
+    :account_id(account_id), account_name(account_name), account_balance(account_balance),currency(currency),open_date(open_date),status(status),created_at(created_at),tariff_plan(tariff_plan)
 {
 
 }

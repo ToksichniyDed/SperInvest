@@ -8,15 +8,16 @@ Client::Client(QObject *parent) : QObject(parent)
     connect(tcpSocket, &QTcpSocket::errorOccurred, this, &Client::displayError);
 }
 
-void Client::connectToServer(const QString& ipAddress, quint16 port)
+bool Client::connectToServer(const QString& ipAddress, quint16 port)
 {
     tcpSocket->connectToHost(ipAddress, port);
-    if (!connect(tcpSocket, &QTcpSocket::connected, this, &Client::connected))
-    {
+    if (tcpSocket->waitForConnected(10000)) {
+        qDebug() << "Successfully connected to the server";
+        return true;
+    } else {
         qDebug() << "Failed to connect to the server";
-        return;
+        return connectToServer("127.0.0.1", 1234);
     }
-    qDebug() << "Socket:"<<tcpSocket;
 }
 
 void Client::connected()
@@ -76,6 +77,7 @@ void Client::readServerData()
     {
         if (dataValue.isArray())
         {
+            account_hash.clear();
             emit clear_accounts_window();
             QJsonArray accountArray = dataValue.toArray();
 
@@ -88,21 +90,29 @@ void Client::readServerData()
 
                     QString acc_id = accountObject["account_id"].toString();
 
-                    account_info acc_info(accountObject["account_id"].toString(),accountObject["account_name"].toString(),accountObject["balance"].toString(),accountObject["currency"].toString()
+                    account_info acc_info(accountObject["account_id"].toString(),accountObject["account_name"].toString(),accountObject["account_balance"].toString(),accountObject["currency"].toString()
                                           ,accountObject["open_date"].toString(),accountObject["status"].toString(),
                                           accountObject["created_at"].toString(),accountObject["tariff_plan"].toString());
 
                     account_hash.insert(acc_id,acc_info);
-
-                    emit send_to_Show_Accounts(&acc_id);
                 }
             }
             emit send_acc_info(&account_hash);
+
+            for(QString& key : account_hash.keys())
+            {
+                emit send_to_Show_Accounts(&key);
+            }
         }
         else
         {
             //emit send_to_Show_Accounts(dataValue);
         }
+    }
+    else if(messageType == "add_balance")
+    {
+        QString message = dataValue.toString();
+        emit rec_add_money_window(message);
     }
     else
     {
@@ -157,15 +167,19 @@ void Client::displayError(QAbstractSocket::SocketError socketError)
     switch (socketError) {
     case QAbstractSocket::RemoteHostClosedError:
         qDebug() << "Error: The remote host closed the connection.";
+        QMessageBox::critical(nullptr, "Ошибка подключения", "Не удалось подключиться к серверу.");
         break;
     case QAbstractSocket::HostNotFoundError:
         qDebug() << "Error: Host not found.";
+        QMessageBox::critical(nullptr, "Ошибка подключения", "Не удалось подключиться к серверу.");
         break;
     case QAbstractSocket::ConnectionRefusedError:
         qDebug() << "Error: The connection was refused by the peer.";
+        QMessageBox::critical(nullptr, "Ошибка подключения", "Не удалось подключиться к серверу.");
         break;
     case QAbstractSocket::SocketTimeoutError:
         qDebug() << "Error: Socket operation timed out.";
+        QMessageBox::critical(nullptr, "Ошибка подключения", "Не удалось подключиться к серверу.");
         break;
     default:
         qDebug() << "Error: " << tcpSocket->errorString();
@@ -177,6 +191,21 @@ QHash<QString, account_info>* Client::get_acc_hash()
 {
     return &account_hash;
 }
+
+void Client::AddBalanceWindow(const QJsonObject &data)
+{
+    // Добавляем тип данных "acc" в объект JSON
+    QJsonObject messageData;
+    messageData["type"] = "add_balance";
+    messageData["data"] = data;
+
+    // Преобразование объекта в строку JSON
+    QJsonDocument jsonDoc(messageData);
+    QString jsonData = jsonDoc.toJson();
+
+    this->sendMessage(jsonData);
+}
+
 
 
 

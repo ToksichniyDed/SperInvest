@@ -20,7 +20,6 @@ public:
     explicit SperInvestWindow(Client* client, QHash<QString, account_info>* acc_info_hash = nullptr, QWidget *parent = nullptr);
     ~SperInvestWindow();
     void onCreate_Account_ButtonClicked();//Кнопка создания нового счета
-//    void Show_Accounts(QJsonObject &accountObject);//Окно вывода счетов
     void Show_Accounts(QString *acc_id);//Окно вывода счетов
     void clear_show_accounts_window();//Очистка окна счетов
     void Show_Account_Info();//Информация о счете

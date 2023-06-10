@@ -25,7 +25,7 @@ void enter_window::onReg_ButtonClicked()
 }
 
 void enter_window::onLog_ButtonClicked()
-{   
+{
     QLineEdit* EmailField = findChild<QLineEdit*>("login");
     QLineEdit* PasswordField = findChild<QLineEdit*>("password");
 
@@ -38,6 +38,7 @@ void enter_window::onLog_ButtonClicked()
     }
     else
     {
+        e_client->connectToServer("127.0.0.1", 1234);
         // Создание объекта с данными
         QJsonObject dataObject;
         dataObject["Email"] = Email;
@@ -45,6 +46,8 @@ void enter_window::onLog_ButtonClicked()
 
         e_client-> enterWindowSubmit(dataObject);
     }
+
+
 }
 
 void enter_window::denied_access()

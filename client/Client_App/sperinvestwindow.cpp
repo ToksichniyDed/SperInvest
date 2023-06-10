@@ -27,6 +27,7 @@ SperInvestWindow::SperInvestWindow(Client* client,QHash<QString, account_info>* 
     show();
 
     // Открываем модальное диалоговое окно
+    enterwindow->setModal(true);
     enterwindow->exec();
 }
 
@@ -51,39 +52,8 @@ void SperInvestWindow::clear_show_accounts_window()
         delete widget;
         delete item;
     }
+    ui->accounts_balance->clear();
 }
-
-//void SperInvestWindow::Show_Accounts(QJsonObject& accountObject)
-//{
-//    // Вывод общего баланса
-//    double sum_balance = ui->accounts_balance->text().toDouble();
-//    sum_balance += accountObject["account_balance"].toString().toDouble();
-//    QString formatted_balance = QString::number(sum_balance, 'f', 2);
-//    ui->accounts_balance->setText(formatted_balance);
-
-//    QString accountName = accountObject["account_name"].toString();
-
-//    // Создание кнопки
-//    QPushButton* button = new QPushButton(accountName);
-
-//    // Получение существующего макета
-//    QVBoxLayout* layout = qobject_cast<QVBoxLayout*>(ui->scrollAreaWidgetContents->layout());
-
-//    // Добавление кнопки в макет
-//    layout->addWidget(button);
-
-//    // Создание вкладки
-//    QTabWidget* tabWidget = findChild<QTabWidget*>("acc_info_tab"); // Получение указателя на QTabWidget из главного окна
-//    account_info_widget* acc_info_widget = new account_info_widget(s_client, tabWidget, &accountObject);
-//    tabWidget->addTab(acc_info_widget, accountName);
-//    tabWidget->setStyleSheet("QTabBar::tab { height: 0px; width: 0px; }");
-//    tabWidget->setCurrentIndex(tabWidget->count()-1);
-//    ui->current_account->setText(accountName);
-
-//    connect(button, &QPushButton::clicked, this, [=]() {
-//        activateTabByText(tabWidget, accountName);
-//    });
-//}
 
 void SperInvestWindow::Show_Accounts(QString* acc_id)
 {
@@ -109,7 +79,7 @@ void SperInvestWindow::Show_Accounts(QString* acc_id)
 
     // Создание вкладки
     QTabWidget* tabWidget = findChild<QTabWidget*>("acc_info_tab"); // Получение указателя на QTabWidget из главного окна
-    account_info_widget* acc_info_widget = new account_info_widget(s_client, tabWidget, acc_info_hash);
+    account_info_widget* acc_info_widget = new account_info_widget(s_client, tabWidget, &acc_info);
     tabWidget->addTab(acc_info_widget, accountName);
     tabWidget->setStyleSheet("QTabBar::tab { height: 0px; width: 0px; }");
     tabWidget->setCurrentIndex(tabWidget->count()-1);

@@ -32,6 +32,7 @@ void registration_window::onRback_ButtonClicked()
     }
     else
     {
+        r_client->connectToServer("127.0.0.1", 1234);
         // Создание объекта с данными
         QJsonObject dataObject;
         dataObject["Username"] = Username;

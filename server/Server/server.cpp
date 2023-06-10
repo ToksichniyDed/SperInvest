@@ -60,6 +60,7 @@ void Server::Connections_Signals(ClientHandler* clientHandler, QThread* clientTh
     connect(clientHandler,&ClientHandler::sendLogDataToServer,this,&Server::loginClientData);// Получение авторизационных данных
     connect(clientHandler,&ClientHandler::sendCreate_Acc_DataToServer,this,&Server::Create_Acc_ClientData);// Получение данных для создания счета
     connect(clientHandler,&ClientHandler::update_accounts_data,this,&Server::Send_Accounts_Data);//Обновление информации о счетах
+    connect(clientHandler, &ClientHandler::send_to_add_balance,this, &Server::Add_Account_Balance);// Зачислить деньги на счет
 
     connect(clientThread, &QThread::finished, clientThread, &QThread::deleteLater);
 
@@ -68,7 +69,8 @@ void Server::Connections_Signals(ClientHandler* clientHandler, QThread* clientTh
     connect(this, &Server::receiveRegDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения регистрации
     connect(this, &Server::receiveAccDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения создания счета
     connect(this, &Server::send_accounts_data, clientHandler, &ClientHandler::sendMessage);// Отправка данных о счете
-    connect(this,&Server::set_ID,clientHandler,&ClientHandler::set_Id);//Установка user_id
+    connect(this, &Server::set_ID,clientHandler,&ClientHandler::set_Id);//Установка user_id
+    connect(this, &Server::receiveAddBalanceFromServer,clientHandler,&ClientHandler::sendMessage);//Отправка подтверждения пополнения счета
 }
 
 void Server::registrationClientData(const QByteArray& data)
@@ -301,6 +303,51 @@ void Server::Send_Accounts_Data(const QString& user_id)
         QString jsonData = jsonDoc.toJson();
 
         emit send_accounts_data(jsonData);
+    }
+}
+
+void Server::Add_Account_Balance(const QByteArray &data, const QString user_id)
+{
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+
+    if (jsonDoc.isObject()) {
+        QJsonObject jsonObj = jsonDoc.object();
+
+        // Извлекаем значения из JSON
+        QString d_account_id = jsonObj.value("account_id").toString();
+        QString d_add_balance = jsonObj.value("add_balance").toString();
+
+        qDebug()<<d_account_id;
+
+        // Создаем SQL-запрос для добавления данных
+        QSqlQuery query;
+        query.prepare("UPDATE investment_accounts SET account_balance = account_balance + :add_balance WHERE account_id = :d_account_id;");
+        query.bindValue(":add_balance", d_add_balance);
+        query.bindValue(":d_account_id", d_account_id);
+
+        if (query.exec()) {
+            qDebug() << "Data update successfully.";
+            QJsonObject rec;
+            rec["type"]= "add_balance";
+            rec["data"]= "Успешное зачисление средств!";
+
+            QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
+            QString message = QString::fromUtf8(byte_rec_log_data);
+            this->Send_Accounts_Data(user_id);
+            emit receiveAddBalanceFromServer(message);          
+        }
+        else
+        {
+            QJsonObject rec;
+            rec["type"]= "add_balance";
+            rec["data"]= "Ошибка зачисления средств!";
+
+            QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
+            QString message = QString::fromUtf8(byte_rec_log_data);
+            this->Send_Accounts_Data(user_id);
+            emit receiveAddBalanceFromServer(message);
+
+        }
     }
 }
 

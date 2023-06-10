@@ -5,7 +5,7 @@
 class account_info
 {
 public:
-    account_info(QString account_id = "",QString account_name= "", QString account_balance= "",QString currency= "", QString open_date= "", QString status= "",QString created_at= "",QString tariff_plan= "");
+    account_info(QString account_id = "", QString account_name= "", QString account_balance= "",QString currency= "", QString open_date= "", QString status= "",QString created_at= "",QString tariff_plan= "");
     QString get_account_name();
     QString get_account_id();
     QString get_account_balance();

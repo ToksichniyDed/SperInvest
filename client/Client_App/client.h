@@ -18,12 +18,13 @@ class Client : public QObject
 public:
     explicit Client(QObject *parent = nullptr);
 
-    void connectToServer(const QString& ipAddress, quint16 port);
+    bool connectToServer(const QString& ipAddress, quint16 port);
     void sendMessage(const QString& message);//функция отправки данных на сервер
     void registrationWindowSubmit(const QJsonObject& data);//получение данных из формы регистрации
     void enterWindowSubmit(const QJsonObject& data);//получение данных из формы входа
     void Create_Acc_WindowSubmit(const QJsonObject& data);//получение данных из формы создания счета
     QHash<QString, account_info>* get_acc_hash();
+    void AddBalanceWindow(const QJsonObject& data);
 
 private slots:
     void readServerData();
@@ -38,6 +39,7 @@ signals:
     void send_to_Show_Accounts(QString* acc_id);
     void clear_accounts_window();
     void send_acc_info(QHash<QString, account_info>* account_hash);
+    void rec_add_money_window(QString message);
 
 private:
     QTcpSocket* tcpSocket;
