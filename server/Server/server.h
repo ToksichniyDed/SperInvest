@@ -13,8 +13,10 @@
 #include <QDateTime>
 #include <QDate>
 
+
 #include "clienthandler.h"
 #include "connect_to_data_base.h"
+#include "connect_to_MOEX_info.h"
 
 class Server : public QObject
 {
@@ -24,16 +26,21 @@ public:
     ~Server();
     void start();
     void handleNewConnection();
-    void Connections_Signals(ClientHandler* clientHandler,QThread* clientThrea);
+    void Connections_Signals(ClientHandler* clientHandler,QThread* clientThread);
     void registrationClientData(const QByteArray& data);
     void loginClientData(const QByteArray& data);
     void Create_Acc_ClientData(const QByteArray& data);
     void Send_Main_Data_To_Client(const QString& user_id);
     void Send_Accounts_Data(const QString& user_id);
     void Add_Account_Balance(const QByteArray& data, const QString user_id);
+    void handleMOEXResponse(const QJsonDocument &jsonDocument);
+    void handleRequestError(const QString &errorMessage);
+    void handleMOEXResponseUp(const QJsonDocument &jsonDocument);
+    void handleRequestErrorUp(const QString &errorMessage);
 
 private:
     QTcpServer *tcpServer;
+    connect_to_MOEX_info *moexConnection;
 
 signals:
     void receiveLogDataFromServer(const QString& message);

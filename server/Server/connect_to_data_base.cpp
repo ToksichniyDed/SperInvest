@@ -31,3 +31,4 @@ void DatabaseConnector::disconnectFromDatabase()
     db.close();
     qDebug() << "Successful disconnection from the database.";
 }
+

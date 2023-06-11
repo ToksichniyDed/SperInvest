@@ -39,11 +39,19 @@ set(PROJECT_SOURCES
     add_money_window.h
     add_money_window.cpp
     add_money_window.ui
+    #Виджет акций
+    exchange_widget.h
+    exchange_widget.cpp
+    exchange_data.ui
     #Клиентская часть
     client.h
     client.cpp
     account_info.h
     account_info.cpp
+    exchange_data.h
+    exchange_data.cpp
+    marketdata_info.h
+    marketdata_info.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

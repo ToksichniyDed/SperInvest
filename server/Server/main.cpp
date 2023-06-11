@@ -1,5 +1,5 @@
 #include <QCoreApplication>
-#include <iostream>
+
 #include "server.h"
 #include "connect_to_data_base.h"
 

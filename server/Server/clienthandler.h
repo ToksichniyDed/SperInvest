@@ -32,6 +32,8 @@ signals:
     void sendCreate_Acc_DataToServer(const QByteArray& data);
     void update_accounts_data(const QString& user_id);
     void send_to_add_balance(const QByteArray& data,const QString user_id);
+    void get_exch_info(QString exch_name);
+    void get_marketdata_info(QString merketdata_name);
 };
 
 #endif // CLIENTHANDLER_H

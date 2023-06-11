@@ -4,14 +4,20 @@ Server::Server(QObject *parent) : QObject(parent)
 {
     // Создаем экземпляр QTcpServer
     tcpServer = new QTcpServer();
+    moexConnection = new connect_to_MOEX_info();
 
     // Подключаем сигнал newConnection к обработчику ClientHandler
     connect(tcpServer, &QTcpServer::newConnection, this, &Server::handleNewConnection);
+    connect(moexConnection, &connect_to_MOEX_info::requestFinished, this, &Server::handleMOEXResponse);
+    connect(moexConnection,&connect_to_MOEX_info::requestError, this, &Server::handleRequestError);
+    connect(moexConnection, &connect_to_MOEX_info::requestFinishedUp, this, &Server::handleMOEXResponseUp);
+    connect(moexConnection,&connect_to_MOEX_info::requestErrorUp, this, &Server::handleRequestErrorUp);
 }
 
 Server::~Server()
 {
     delete tcpServer;
+    delete moexConnection;
 }
 
 void Server::start()
@@ -44,13 +50,13 @@ void Server::handleNewConnection()
     // Перемещаем экземпляр ClientHandler в поток clientThread
     clientHandler->moveToThread(clientThread);
 
+    // Передаем MOEX объект класса ClientHandler
+    moexConnection->get_client_handler(clientHandler);
+
     this->Connections_Signals(clientHandler, clientThread);
 
     // Запускаем поток clientThread
     clientThread->start();
-
-    // Вызываем метод setSocket у clientHandler в его потоке
-    //QMetaObject::invokeMethod(clientHandler, "setSocket", Qt::QueuedConnection, Q_ARG(QTcpSocket*, clientSocket));
 }
 
 void Server::Connections_Signals(ClientHandler* clientHandler, QThread* clientThread)
@@ -351,3 +357,223 @@ void Server::Add_Account_Balance(const QByteArray &data, const QString user_id)
     }
 }
 
+void Server::handleMOEXResponse(const QJsonDocument &jsonDocument)
+{
+    QJsonObject rootObject = jsonDocument.object();
+    QJsonObject securities_array;
+
+    if (rootObject.contains("securities") && rootObject["securities"].isObject())
+    {
+        QJsonObject securitiesObject = rootObject["securities"].toObject();
+
+        if (securitiesObject.contains("columns") && securitiesObject["columns"].isArray())
+        {
+            QJsonArray columnsArray = securitiesObject["columns"].toArray();
+            QVector<QString> columnNames;
+
+            // Обработка массива "columns"
+            for (const QJsonValue &value : columnsArray)
+            {
+                // Пример доступа к элементу массива
+                QString columnName = value.toString();
+                columnNames.append(columnName);
+            }
+
+            if (securitiesObject.contains("data") && securitiesObject["data"].isArray())
+            {
+                QJsonArray dataArray = securitiesObject["data"].toArray();
+
+                // Обработка массива "data"
+                for (const QJsonValue &value : dataArray)
+                {
+                    // Пример доступа к элементу массива
+                    QJsonArray rowData = value.toArray();
+
+                    // Проверяем, что количество элементов в rowData соответствует количеству элементов в columnNames
+                    if (rowData.size() != columnNames.size())
+                    {
+                        qDebug() << "Data and column sizes do not match";
+                        continue;
+                    }
+
+                    // Обработка данных строки с соответствующими колонками
+                    for (int i = 0; i < rowData.size(); ++i)
+                    {
+                        // Пример доступа к элементу строки и соответствующей колонке
+                        QString columnName = columnNames[i];
+                        QJsonValue rowValue = rowData[i];
+
+                        QString data;
+                        if (rowValue.isDouble()) {
+                            double value = rowValue.toDouble();
+                            data = QString::number(value);
+                        } else {
+                            data = rowValue.toString();
+                        }
+
+                        qDebug() << "Column: " << columnName << ", Data: " << data;
+                        securities_array[columnName]=data;
+                    }
+                }
+            }
+        }
+
+        QJsonObject marketdata_array;
+
+        if (rootObject.contains("marketdata") && rootObject["marketdata"].isObject())
+        {
+            QJsonObject marketdataObject = rootObject["marketdata"].toObject();
+
+            if (marketdataObject.contains("columns") && marketdataObject["columns"].isArray())
+            {
+                QJsonArray columnsArray = marketdataObject["columns"].toArray();
+                QVector<QString> columnNames;
+
+                // Обработка массива "columns"
+                for (const QJsonValue &value : columnsArray)
+                {
+                    // Пример доступа к элементу массива
+                    QString columnName = value.toString();
+                    columnNames.append(columnName);
+                }
+
+                if (marketdataObject.contains("data") && marketdataObject["data"].isArray())
+                {
+                    QJsonArray dataArray = marketdataObject["data"].toArray();
+
+                    // Обработка массива "data"
+                    for (const QJsonValue &value : dataArray)
+                    {
+                        // Пример доступа к элементу массива
+                        QJsonArray rowData = value.toArray();
+
+                        // Проверяем, что количество элементов в rowData соответствует количеству элементов в columnNames
+                        if (rowData.size() != columnNames.size())
+                        {
+                            qDebug() << "Data and column sizes do not match";
+                            continue;
+                        }
+
+                        // Обработка данных строки с соответствующими колонками
+                        for (int i = 0; i < rowData.size(); ++i)
+                        {
+                            // Пример доступа к элементу строки и соответствующей колонке
+                            QString columnName = columnNames[i];
+                            QJsonValue rowValue = rowData[i];
+
+                            QString data;
+                            if (rowValue.isDouble()) {
+                                double value = rowValue.toDouble();
+                                data = QString::number(value);
+                            } else {
+                                data = rowValue.toString();
+                            }
+
+                            qDebug() << "Column: " << columnName << ", Data: " << data;
+                            marketdata_array[columnName]=data;
+                        }
+                    }
+                }
+            }
+        }
+
+        QJsonObject dataObject;
+        dataObject["type"] = "exchange_data";
+        dataObject["securities"] = QJsonValue(securities_array);
+        dataObject["marketdata"] = QJsonValue(marketdata_array);
+
+        // Преобразуем объект JSON в строку
+        QJsonDocument jsonDoc(dataObject);
+        QString jsonData = jsonDoc.toJson();
+
+        emit send_accounts_data(jsonData);
+    }
+    else
+    {
+        this->handleRequestError("Invalid JSON response");
+    }
+}
+
+void Server::handleRequestError(const QString &errorMessage)
+{
+    // Обработка ошибки подключения
+    qDebug() << "Request Error: " << errorMessage;
+}
+
+void Server::handleMOEXResponseUp(const QJsonDocument &jsonDocument)
+{
+    QJsonObject rootObject = jsonDocument.object();
+    QJsonObject marketdata_array;
+
+    if (rootObject.contains("marketdata") && rootObject["marketdata"].isObject())
+    {
+        QJsonObject marketdataObject = rootObject["marketdata"].toObject();
+
+        if (marketdataObject.contains("columns") && marketdataObject["columns"].isArray())
+        {
+            QJsonArray columnsArray = marketdataObject["columns"].toArray();
+            QVector<QString> columnNames;
+
+            // Обработка массива "columns"
+            for (const QJsonValue &value : columnsArray)
+            {
+                // Пример доступа к элементу массива
+                QString columnName = value.toString();
+                columnNames.append(columnName);
+            }
+
+            if (marketdataObject.contains("data") && marketdataObject["data"].isArray())
+            {
+                QJsonArray dataArray = marketdataObject["data"].toArray();
+
+                // Обработка массива "data"
+                for (const QJsonValue &value : dataArray)
+                {
+                    // Пример доступа к элементу массива
+                    QJsonArray rowData = value.toArray();
+
+                    // Проверяем, что количество элементов в rowData соответствует количеству элементов в columnNames
+                    if (rowData.size() != columnNames.size())
+                    {
+                        qDebug() << "Data and column sizes do not match";
+                        continue;
+                    }
+
+                    // Обработка данных строки с соответствующими колонками
+                    for (int i = 0; i < rowData.size(); ++i)
+                    {
+                        // Пример доступа к элементу строки и соответствующей колонке
+                        QString columnName = columnNames[i];
+                        QJsonValue rowValue = rowData[i];
+
+                        QString data;
+                        if (rowValue.isDouble()) {
+                            double value = rowValue.toDouble();
+                            data = QString::number(value);
+                        } else {
+                            data = rowValue.toString();
+                        }
+
+                        qDebug() << "Column: " << columnName << ", Data: " << data;
+                        marketdata_array[columnName]=data;
+                    }
+                }
+            }
+        }
+    }
+    QJsonObject dataObject;
+    dataObject["type"] = "update_marketdata";
+    dataObject["marketdata"] = QJsonValue(marketdata_array);
+
+    // Преобразуем объект JSON в строку
+    QJsonDocument jsonDoc(dataObject);
+    QString jsonData = jsonDoc.toJson();
+
+    emit send_accounts_data(jsonData);
+}
+
+void Server::handleRequestErrorUp(const QString &errorMessage)
+{
+    // Обработка ошибки подключения
+    qDebug() << "Request Error: " << errorMessage;
+}

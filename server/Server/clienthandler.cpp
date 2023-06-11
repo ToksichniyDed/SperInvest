@@ -104,6 +104,18 @@ void ClientHandler::readClientData()
             emit send_to_add_balance(jsonData,m_user_id);
         }
     }
+    else if(messageType == "get_exchange")
+    {
+        QString exch_name = messageData["data"].toString();
+
+        emit get_exch_info(exch_name);
+    }
+    else if(messageType == "update_marketdata")
+    {
+        QString marketdata_name = messageData["data"].toString();
+
+        emit get_marketdata_info(marketdata_name);
+    }
     else
     {
         this->sendMessage("Data delivered succesfully!");

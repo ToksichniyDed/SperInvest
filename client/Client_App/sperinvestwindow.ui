@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>709</width>
-    <height>475</height>
+    <height>485</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -41,7 +41,7 @@
    <enum>QTabWidget::Triangular</enum>
   </property>
   <property name="currentIndex">
-   <number>0</number>
+   <number>2</number>
   </property>
   <property name="iconSize">
    <size>
@@ -104,7 +104,7 @@
          <x>0</x>
          <y>0</y>
          <width>144</width>
-         <height>349</height>
+         <height>359</height>
         </rect>
        </property>
       </widget>
@@ -196,6 +196,101 @@
    <attribute name="title">
     <string>Биржа</string>
    </attribute>
+   <layout class="QGridLayout" name="gridLayout_2">
+    <item row="0" column="0">
+     <widget class="QComboBox" name="choose_issuer">
+      <property name="editable">
+       <bool>false</bool>
+      </property>
+      <item>
+       <property name="text">
+        <string>MSNG(+МосЭнерго)</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>ALRS(АЛРОСА ао)</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>AFLT(Аэрофлот)</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>VTBR(ВТБ ао)</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>SIBN(Газпромнефть)</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>GAZP(ГАЗПРОМ ао)</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QPushButton" name="confirm_button">
+      <property name="text">
+       <string>Вывести на экран</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0" colspan="2">
+     <widget class="QTabWidget" name="exchange_info">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>691</width>
+        <height>401</height>
+       </size>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <property name="tabsClosable">
+       <bool>true</bool>
+      </property>
+      <property name="movable">
+       <bool>true</bool>
+      </property>
+      <property name="tabBarAutoHide">
+       <bool>true</bool>
+      </property>
+      <widget class="QWidget" name="First_tab">
+       <attribute name="title">
+        <string>Нет открытых акций</string>
+       </attribute>
+       <widget class="QLabel" name="label_13">
+        <property name="geometry">
+         <rect>
+          <x>180</x>
+          <y>150</y>
+          <width>261</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Выберите бумагу для получения информации</string>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QWidget" name="Other">
    <property name="minimumSize">

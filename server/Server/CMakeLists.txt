@@ -17,12 +17,18 @@ find_package(Qt6 COMPONENTS Sql REQUIRED)
 
 add_executable(Server
   main.cpp
+  #Сервер
   server.h
   server.cpp
+  #Обработчик подключения
   clienthandler.h
   clienthandler.cpp
+  #Подключение к базе данных
   connect_to_data_base.h
   connect_to_data_base.cpp
+  #Подключение к MOEX
+  connect_to_moex_info.h
+  connect_to_moex_info.cpp
 )
 
 target_link_libraries(Server PRIVATE Qt${QT_VERSION_MAJOR}::Core)

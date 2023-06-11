@@ -114,6 +114,192 @@ void Client::readServerData()
         QString message = dataValue.toString();
         emit rec_add_money_window(message);
     }
+    else if (messageType == "exchange_data")
+    {
+        QJsonObject securitiesObject = messageData["securities"].toObject();
+        QJsonObject marketdataObject = messageData["marketdata"].toObject();
+
+        if (!securitiesObject.isEmpty() && !marketdataObject.isEmpty())
+        {
+            QString exchange_id = securitiesObject["SECID"].toString();
+
+            if (!exchange_hash.contains(exchange_id))
+            {
+                exchange_data exch_data(
+                    securitiesObject["SECID"].toString(),
+                    securitiesObject["BOARDID"].toString(),
+                    securitiesObject["SHORTNAME"].toString(),
+                    securitiesObject["PREVPRICE"].toString(),
+                    securitiesObject["LOTSIZE"].toString(),
+                    securitiesObject["FACEVALUE"].toString(),
+                    securitiesObject["STATUS"].toString(),
+                    securitiesObject["BOARDNAME"].toString(),
+                    securitiesObject["DECIMALS"].toString(),
+                    securitiesObject["SECNAME"].toString(),
+                    securitiesObject["REMARKS"].toString(),
+                    securitiesObject["MARKETCODE"].toString(),
+                    securitiesObject["INSTRID"].toString(),
+                    securitiesObject["SECTORID"].toString(),
+                    securitiesObject["MINSTEP"].toString(),
+                    securitiesObject["PREVWAPRICE"].toString(),
+                    securitiesObject["FACEUNIT"].toString(),
+                    securitiesObject["PREVDATE"].toString(),
+                    securitiesObject["ISSUESIZE"].toString(),
+                    securitiesObject["ISIN"].toString(),
+                    securitiesObject["LATNAME"].toString(),
+                    securitiesObject["REGNUMBER"].toString(),
+                    securitiesObject["PREVLEGALCLOSEPRICE"].toString(),
+                    securitiesObject["CURRENCYID"].toString(),
+                    securitiesObject["SECTYPE"].toString(),
+                    securitiesObject["LISTLEVEL"].toString(),
+                    securitiesObject["SETTLEDATE"].toString()
+                    );
+
+                exchange_hash.insert(exchange_id, exch_data);
+                emit send_exchange_info(&exchange_hash);
+            }
+            else
+            {
+                emit send_to_Show_Exchange(exchange_id);
+            }
+
+            QString marketdata_id = marketdataObject["SECID"].toString();
+
+            if (!marketdata_hash.contains(marketdata_id))
+            {
+                marketdata_info marketdata_data(
+                    marketdataObject["SECID"].toString(),
+                    marketdataObject["BOARDID"].toString(),
+                    marketdataObject["BID"].toString(),
+                    marketdataObject["BIDDEPTH"].toString(),
+                    marketdataObject["OFFER"].toString(),
+                    marketdataObject["OFFERDEPTH"].toString(),
+                    marketdataObject["SPREAD"].toString(),
+                    marketdataObject["BIDDEPTHT"].toString(),
+                    marketdataObject["OFFERDEPTHT"].toString(),
+                    marketdataObject["OPEN"].toString(),
+                    marketdataObject["LOW"].toString(),
+                    marketdataObject["HIGH"].toString(),
+                    marketdataObject["LAST"].toString(),
+                    marketdataObject["LASTCHANGE"].toString(),
+                    marketdataObject["LASTCHANGEPRCNT"].toString(),
+                    marketdataObject["QTY"].toString(),
+                    marketdataObject["VALUE"].toString(),
+                    marketdataObject["VALUE_USD"].toString(),
+                    marketdataObject["WAPRICE"].toString(),
+                    marketdataObject["LASTCNGTOLASTWAPRICE"].toString(),
+                    marketdataObject["WAPTOPREVWAPRICEPRCNT"].toString(),
+                    marketdataObject["WAPTOPREVWAPRICE"].toString(),
+                    marketdataObject["CLOSEPRICE"].toString(),
+                    marketdataObject["MARKETPRICETODAY"].toString(),
+                    marketdataObject["MARKETPRICE"].toString(),
+                    marketdataObject["LASTTOPREVPRICE"].toString(),
+                    marketdataObject["NUMTRADES"].toString(),
+                    marketdataObject["VOLTODAY"].toString(),
+                    marketdataObject["VALTODAY"].toString(),
+                    marketdataObject["VALTODAY_USD"].toString(),
+                    marketdataObject["ETFSETTLEPRICE"].toString(),
+                    marketdataObject["TRADINGSTATUS"].toString(),
+                    marketdataObject["UPDATETIME"].toString(),
+                    marketdataObject["LASTBID"].toString(),
+                    marketdataObject["LASTOFFER"].toString(),
+                    marketdataObject["LCLOSEPRICE"].toString(),
+                    marketdataObject["LCURRENTPRICE"].toString(),
+                    marketdataObject["MARKETPRICE2"].toString(),
+                    marketdataObject["NUMBIDS"].toString(),
+                    marketdataObject["NUMOFFERS"].toString(),
+                    marketdataObject["CHANGE"].toString(),
+                    marketdataObject["TIME"].toString(),
+                    marketdataObject["HIGHBID"].toString(),
+                    marketdataObject["LOWOFFER"].toString(),
+                    marketdataObject["PRICEMINUSPREVWAPRICE"].toString(),
+                    marketdataObject["OPENPERIODPRICE"].toString(),
+                    marketdataObject["SEQNUM"].toString(),
+                    marketdataObject["SYSTIME"].toString(),
+                    marketdataObject["CLOSINGAUCTIONPRICE"].toString(),
+                    marketdataObject["CLOSINGAUCTIONVOLUME"].toString(),
+                    marketdataObject["ISSUECAPITALIZATION"].toString(),
+                    marketdataObject["ISSUECAPITALIZATION_UPDATETIME"].toString(),
+                    marketdataObject["ETFSETTLECURRENCY"].toString(),
+                    marketdataObject["VALTODAY_RUR"].toString(),
+                    marketdataObject["TRADINGSESSION"].toString()
+                    );
+
+                marketdata_hash.insert(marketdata_id, marketdata_data);
+                emit send_marketdata_info(&marketdata_hash);
+            }
+            emit send_to_Show_Exchange(exchange_id);
+        }
+    }
+    else if(messageType == "update_marketdata")
+    {
+        QJsonObject marketdataObject = messageData["marketdata"].toObject();
+
+        if (!marketdataObject.isEmpty())
+        {
+            QString marketdata_id = marketdataObject["SECID"].toString();
+
+            marketdata_info& marketdata_data = marketdata_hash[marketdata_id];
+
+            marketdata_data.setSECID(marketdataObject["SECID"].toString());
+            marketdata_data.setBOARDID(marketdataObject["BOARDID"].toString());
+            marketdata_data.setBID(marketdataObject["BID"].toString());
+            marketdata_data.setBIDDEPTH(marketdataObject["BIDDEPTH"].toString());
+            marketdata_data.setOFFER(marketdataObject["OFFER"].toString());
+            marketdata_data.setOFFERDEPTH(marketdataObject["OFFERDEPTH"].toString());
+            marketdata_data.setSPREAD(marketdataObject["SPREAD"].toString());
+            marketdata_data.setBIDDEPTHT(marketdataObject["BIDDEPTHT"].toString());
+            marketdata_data.setOFFERDEPTHT(marketdataObject["OFFERDEPTHT"].toString());
+            marketdata_data.setOPEN(marketdataObject["OPEN"].toString());
+            marketdata_data.setLOW(marketdataObject["LOW"].toString());
+            marketdata_data.setHIGH(marketdataObject["HIGH"].toString());
+            marketdata_data.setLAST(marketdataObject["LAST"].toString());
+            marketdata_data.setLASTCHANGE(marketdataObject["LASTCHANGE"].toString());
+            marketdata_data.setLASTCHANGEPRCNT(marketdataObject["LASTCHANGEPRCNT"].toString());
+            marketdata_data.setQTY(marketdataObject["QTY"].toString());
+            marketdata_data.setVALUE(marketdataObject["VALUE"].toString());
+            marketdata_data.setVALUE_USD(marketdataObject["VALUE_USD"].toString());
+            marketdata_data.setWAPRICE(marketdataObject["WAPRICE"].toString());
+            marketdata_data.setLASTCNGTOLASTWAPRICE(marketdataObject["LASTCNGTOLASTWAPRICE"].toString());
+            marketdata_data.setWAPTOPREVWAPRICEPRCNT(marketdataObject["WAPTOPREVWAPRICEPRCNT"].toString());
+            marketdata_data.setWAPTOPREVWAPRICE(marketdataObject["WAPTOPREVWAPRICE"].toString());
+            marketdata_data.setCLOSEPRICE(marketdataObject["CLOSEPRICE"].toString());
+            marketdata_data.setMARKETPRICETODAY(marketdataObject["MARKETPRICETODAY"].toString());
+            marketdata_data.setMARKETPRICE(marketdataObject["MARKETPRICE"].toString());
+            marketdata_data.setLASTTOPREVPRICE(marketdataObject["LASTTOPREVPRICE"].toString());
+            marketdata_data.setNUMTRADES(marketdataObject["NUMTRADES"].toString());
+            marketdata_data.setVOLTODAY(marketdataObject["VOLTODAY"].toString());
+            marketdata_data.setVALTODAY(marketdataObject["VALTODAY"].toString());
+            marketdata_data.setVALTODAY_USD(marketdataObject["VALTODAY_USD"].toString());
+            marketdata_data.setETFSETTLEPRICE(marketdataObject["ETFSETTLEPRICE"].toString());
+            marketdata_data.setTRADINGSTATUS(marketdataObject["TRADINGSTATUS"].toString());
+            marketdata_data.setUPDATETIME(marketdataObject["UPDATETIME"].toString());
+            marketdata_data.setLASTBID(marketdataObject["LASTBID"].toString());
+            marketdata_data.setLASTOFFER(marketdataObject["LASTOFFER"].toString());
+            marketdata_data.setLCLOSEPRICE(marketdataObject["LCLOSEPRICE"].toString());
+            marketdata_data.setLCURRENTPRICE(marketdataObject["LCURRENTPRICE"].toString());
+            marketdata_data.setMARKETPRICE2(marketdataObject["MARKETPRICE2"].toString());
+            marketdata_data.setNUMBIDS(marketdataObject["NUMBIDS"].toString());
+            marketdata_data.setNUMOFFERS(marketdataObject["NUMOFFERS"].toString());
+            marketdata_data.setCHANGE(marketdataObject["CHANGE"].toString());
+            marketdata_data.setTIME(marketdataObject["TIME"].toString());
+            marketdata_data.setHIGHBID(marketdataObject["HIGHBID"].toString());
+            marketdata_data.setLOWOFFER(marketdataObject["LOWOFFER"].toString());
+            marketdata_data.setPRICEMINUSPREVWAPRICE(marketdataObject["PRICEMINUSPREVWAPRICE"].toString());
+            marketdata_data.setOPENPERIODPRICE(marketdataObject["OPENPERIODPRICE"].toString());
+            marketdata_data.setSEQNUM(marketdataObject["SEQNUM"].toString());
+            marketdata_data.setSYSTIME(marketdataObject["SYSTIME"].toString());
+            marketdata_data.setCLOSINGAUCTIONPRICE(marketdataObject["CLOSINGAUCTIONPRICE"].toString());
+            marketdata_data.setCLOSINGAUCTIONVOLUME(marketdataObject["CLOSINGAUCTIONVOLUME"].toString());
+            marketdata_data.setISSUECAPITALIZATION(marketdataObject["ISSUECAPITALIZATION"].toString());
+            marketdata_data.setISSUECAPITALIZATION_UPDATETIME(marketdataObject["ISSUECAPITALIZATION_UPDATETIME"].toString());
+            marketdata_data.setETFSETTLECURRENCY(marketdataObject["ETFSETTLECURRENCY"].toString());
+            marketdata_data.setVALTODAY_RUR(marketdataObject["VALTODAY_RUR"].toString());
+            marketdata_data.setTRADINGSESSION(marketdataObject["TRADINGSESSION"].toString());
+
+            emit update_marketdata_field(&marketdata_data);
+        }
+    }
     else
     {
         qDebug()<<"Recieve from server!";
@@ -192,6 +378,11 @@ QHash<QString, account_info>* Client::get_acc_hash()
     return &account_hash;
 }
 
+QHash<QString, exchange_data>* Client::get_exchange_hash()
+{
+    return &exchange_hash;
+}
+
 void Client::AddBalanceWindow(const QJsonObject &data)
 {
     // Добавляем тип данных "acc" в объект JSON
@@ -205,6 +396,7 @@ void Client::AddBalanceWindow(const QJsonObject &data)
 
     this->sendMessage(jsonData);
 }
+
 
 
 
