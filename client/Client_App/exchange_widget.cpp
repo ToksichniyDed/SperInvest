@@ -6,12 +6,15 @@ exchange_widget::exchange_widget(QWidget *parent,Client* ex_client,exchange_data
     ui->setupUi(this);
     this->setExchangeData();
 
-    connect(ex_client, &Client::update_marketdata_field, this, &exchange_widget::setMarketdataData, Qt::UniqueConnection);
-
+    connect(ex_client, &Client::update_marketdata_field, this, &exchange_widget::setMarketdataData);
+    connect(ui->buy_exchange, &QPushButton::clicked, [this]() {
+        onBuy_Exch_ButtonClicked();
+    });
 }
 
 exchange_widget::~exchange_widget()
 {
+    disconnect(ex_client, &Client::update_marketdata_field, this, &exchange_widget::setMarketdataData);
     delete ui;    
 }
 
@@ -37,17 +40,6 @@ void exchange_widget::setExchangeData()
     temp = (*exch_info).getPREVPRICE();
     ui->PREVPRICE->setText(temp);
 
-    //    temp = (*marketdata_info1).getOPEN();
-    //    ui->OPEN->setText(temp);
-    //    temp = (*marketdata_info1).getHIGH();
-    //    ui->HIGH->setText(temp);
-    //    temp = (*marketdata_info1).getLOW();
-    //    ui->LOW->setText(temp);
-    //    temp = (*marketdata_info1).getLAST();
-    //    ui->LAST->setText(temp);
-    //    temp = (*marketdata_info1).getSYSTIME();
-    //    ui->SYSTIME->setText(temp);
-
     this->setMarketdataData(marketdata_info1);
 }
 
@@ -56,27 +48,32 @@ void exchange_widget::setMarketdataData(marketdata_info* marketdata_info2)
     QString secid = ui->SECID->text();
     if((*marketdata_info2).getSECID() == secid)
     {
-    qDebug() << "Here";
-    QString temp = (*marketdata_info2).getOPEN();
-    ui->OPEN->setText(temp);
-    temp = (*marketdata_info2).getHIGH();
-    ui->HIGH->setText(temp);
-    temp = (*marketdata_info2).getLOW();
-    ui->LOW->setText(temp);
-    temp = (*marketdata_info2).getLAST();
-    ui->LAST->setText(temp);
-    temp = (*marketdata_info2).getSYSTIME();
-    ui->SYSTIME->setText(temp);
+        QString temp = (*marketdata_info2).getOPEN();
+        ui->OPEN->setText(temp);
+        temp = (*marketdata_info2).getHIGH();
+        ui->HIGH->setText(temp);
+        temp = (*marketdata_info2).getLOW();
+        ui->LOW->setText(temp);
+        temp = (*marketdata_info2).getLAST();
+        ui->LAST->setText(temp);
+        temp = (*marketdata_info2).getSYSTIME();
+        ui->SYSTIME->setText(temp);
 
-    QJsonObject dataObject;
-    dataObject["type"] = "update_marketdata";
-    dataObject["data"] = (*marketdata_info2).getSECID();
-    QJsonDocument doc(dataObject);
-    QString jsonString = QString::fromUtf8(doc.toJson());
+        QJsonObject dataObject;
+        dataObject["type"] = "update_marketdata";
+        dataObject["data"] = (*marketdata_info2).getSECID();
+        QJsonDocument doc(dataObject);
+        QString jsonString = QString::fromUtf8(doc.toJson());
 
-    QTimer::singleShot(10000, this, [this, jsonString]() {
-        ex_client->sendMessage(jsonString);
-    });
+        QTimer::singleShot(10000, this, [this, jsonString]() {
+            ex_client->sendMessage(jsonString);
+        });
     }
 }
 
+void exchange_widget::onBuy_Exch_ButtonClicked()
+{
+    QString secid = ui->SECID->text();
+    buy_exchange* buy_exchange_window = new buy_exchange(ex_client,secid,0,0,this);
+    buy_exchange_window->exec();
+}

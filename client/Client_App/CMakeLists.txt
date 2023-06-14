@@ -43,6 +43,19 @@ set(PROJECT_SOURCES
     exchange_widget.h
     exchange_widget.cpp
     exchange_data.ui
+    #Окно покупки бумаги
+    buy_exchange.h
+    buy_exchange.cpp
+    buy_exchange.ui
+    #Окно снятия средств
+    get_money_window.h
+    get_money_window.cpp
+    get_money_window.ui
+    #Виджет вывода купленных активов
+    exch.h
+    exch.cpp
+    exch.ui
+    exch_tab.h exch_tab.cpp exch_tab.ui
     #Клиентская часть
     client.h
     client.cpp
@@ -52,6 +65,8 @@ set(PROJECT_SOURCES
     exchange_data.cpp
     marketdata_info.h
     marketdata_info.cpp
+    purchase.h
+    purchase.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

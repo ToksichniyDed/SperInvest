@@ -5,6 +5,8 @@
 #include <QMessageBox>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
 
 #include "ui_registration_window.h"
 #include "client.h"

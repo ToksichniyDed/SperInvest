@@ -6,6 +6,14 @@ registration_window::registration_window(Client *client, QWidget *parent) :
 {
     ui->setupUi(this);
 
+    QString phonePattern = "^\\d\\d{3}\\d{3}\\d{4}$";
+    QRegularExpression phoneRegExp(phonePattern);
+    QRegularExpressionValidator* phoneValidator = new QRegularExpressionValidator(phoneRegExp, this);
+    QLineEdit* PhoneField = findChild<QLineEdit*>("Phone");
+
+    PhoneField->setValidator(phoneValidator);
+
+
     // Связывание обработчика события с кнопками
     connect(ui->rback_button, &QPushButton::clicked, this, &registration_window::onRback_ButtonClicked);
     connect(ui->back_button, &QPushButton::clicked, this, &registration_window::onBack_ButtonClicked);
@@ -57,7 +65,7 @@ void registration_window::rec_from_server(QString message)
         QMessageBox::critical(this,"Ошибка", message);
     else
     {
-        QMessageBox::critical(this,"Поздравляю", message);
+        QMessageBox::information(this,"Поздравляю", message);
         this->accept();
     }
 }

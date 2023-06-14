@@ -201,7 +201,6 @@ public:
     void setVALTODAY_RUR( QString value);
     void setTRADINGSESSION( QString value);
 
-
 };
 
 #endif // MARKETDATA_INFO_H

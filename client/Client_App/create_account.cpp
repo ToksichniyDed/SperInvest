@@ -11,6 +11,7 @@ create_account::create_account(Client* client, QWidget *parent) : c_client(clien
 
 create_account::~create_account()
 {
+    disconnect(ui->create_account_button,&QPushButton::clicked,this,&create_account::check_create_acc_data);
     delete ui;
 }
 
@@ -54,6 +55,8 @@ void create_account::check_create_acc_data()
 
 void create_account::close_window(QString message)
 {
-    QMessageBox::critical(this,"Поздравляю", message);
-    this->accept();
+    qDebug()<<message;
+    QMessageBox::information(this,"Поздравляю", message);
+    disconnect(c_client,&Client::close_create_acc_window,this,&create_account::close_window);
+    this->close();
 }

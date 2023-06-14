@@ -7,54 +7,40 @@
     <x>0</x>
     <y>0</y>
     <width>640</width>
-    <height>480</height>
+    <height>373</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>227</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>ToolBox</string>
   </property>
-  <widget class="QWidget" name="page">
+  <widget class="QWidget" name="page_1">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>420</height>
+     <height>313</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <attribute name="label">
     <string>Деньги</string>
    </attribute>
-   <widget class="QPushButton" name="add_money">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>60</y>
-      <width>181</width>
-      <height>24</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Пополнить счет</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="money">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>30</y>
-      <width>181</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="readOnly">
-     <bool>true</bool>
-    </property>
-   </widget>
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>270</x>
+      <x>320</x>
       <y>10</y>
       <width>301</width>
       <height>161</height>
@@ -64,6 +50,39 @@
      <string>Место для кругового графика</string>
     </property>
    </widget>
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>30</y>
+      <width>211</width>
+      <height>83</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QLineEdit" name="money">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="add_money">
+       <property name="text">
+        <string>Пополнить счет</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="get_money">
+       <property name="text">
+        <string>Вывести средства</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <widget class="QWidget" name="page_2">
    <property name="geometry">
@@ -71,8 +90,14 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>420</height>
+     <height>314</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <attribute name="label">
     <string>Акции</string>

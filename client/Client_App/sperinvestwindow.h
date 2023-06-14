@@ -26,7 +26,7 @@ public:
     void Show_Accounts(QString *acc_id);//Окно вывода счетов
     void clear_show_accounts_window();//Очистка окна счетов
     void Show_Account_Info();//Информация о счете
-    void activateTabByText(QTabWidget* tabWidget, const QString& tabText);
+    void activateTabByText(QTabWidget* tabWidget, const QString& tabText,const QString& sum);
     void set_account_info_hash(QHash<QString, account_info>* acc_info_hash);
     void set_exchange_info_hash(QHash<QString, exchange_data>* exchange_info);
     void set_marketdata_info(QHash<QString, marketdata_info>* marketdata_hash);

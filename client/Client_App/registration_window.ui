@@ -46,8 +46,17 @@
     </item>
     <item>
      <widget class="QLineEdit" name="Phone">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="dragEnabled">
+       <bool>false</bool>
+      </property>
+      <property name="readOnly">
+       <bool>false</bool>
+      </property>
       <property name="placeholderText">
-       <string>Телефонный номер</string>
+       <string>Телефонный номер(8-***-***-****)</string>
       </property>
      </widget>
     </item>

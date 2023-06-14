@@ -31,9 +31,11 @@ signals:
     void sendLogDataToServer(const QByteArray& data);
     void sendCreate_Acc_DataToServer(const QByteArray& data);
     void update_accounts_data(const QString& user_id);
-    void send_to_add_balance(const QByteArray& data,const QString user_id);
+    void send_to_add_balance(const QByteArray& data,const QString user_id, bool isDeposit);
     void get_exch_info(QString exch_name);
     void get_marketdata_info(QString merketdata_name);
+    void purchase_exchange(const QByteArray& data,const QString user_id, bool isDeposit);
+    void update_acc_purch_data(const QString& user_id);
 };
 
 #endif // CLIENTHANDLER_H

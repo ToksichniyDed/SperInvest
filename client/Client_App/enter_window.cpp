@@ -57,5 +57,11 @@ void enter_window::denied_access()
 
 void enter_window::close_enter_window()
 {
-    this->accept();
+    QPropertyAnimation *animation = new QPropertyAnimation(this, "windowOpacity");
+    animation->setDuration(3000); // Длительность анимации в миллисекундах
+    animation->setStartValue(1.0); // Начальное значение прозрачности (полностью непрозрачное)
+    animation->setEndValue(0.0); // Конечное значение прозрачности (полностью прозрачное)
+    connect(animation, &QPropertyAnimation::finished, this, &enter_window::accept); // По завершении анимации вызываем accept()
+    animation->start(QAbstractAnimation::DeleteWhenStopped);
 }
+

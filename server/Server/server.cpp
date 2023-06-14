@@ -67,6 +67,8 @@ void Server::Connections_Signals(ClientHandler* clientHandler, QThread* clientTh
     connect(clientHandler,&ClientHandler::sendCreate_Acc_DataToServer,this,&Server::Create_Acc_ClientData);// Получение данных для создания счета
     connect(clientHandler,&ClientHandler::update_accounts_data,this,&Server::Send_Accounts_Data);//Обновление информации о счетах
     connect(clientHandler, &ClientHandler::send_to_add_balance,this, &Server::Add_Account_Balance);// Зачислить деньги на счет
+    connect(clientHandler, &ClientHandler::purchase_exchange, this, &Server::Purchase_Exchange);// Зачисляем приобритение акций на счет.
+    connect(clientHandler, &ClientHandler::update_acc_purch_data, this, &Server::Send_Main_Data_To_Client);
 
     connect(clientThread, &QThread::finished, clientThread, &QThread::deleteLater);
 
@@ -77,6 +79,8 @@ void Server::Connections_Signals(ClientHandler* clientHandler, QThread* clientTh
     connect(this, &Server::send_accounts_data, clientHandler, &ClientHandler::sendMessage);// Отправка данных о счете
     connect(this, &Server::set_ID,clientHandler,&ClientHandler::set_Id);//Установка user_id
     connect(this, &Server::receiveAddBalanceFromServer,clientHandler,&ClientHandler::sendMessage);//Отправка подтверждения пополнения счета
+    connect(this, &Server::receivePurchaseExchangeFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения операции с бумагами
+    connect(this, &Server::send_exch_data, clientHandler, &ClientHandler::sendMessage);//Отправка данных о ценных бумагах на счете
 }
 
 void Server::registrationClientData(const QByteArray& data)
@@ -260,7 +264,9 @@ void Server::Create_Acc_ClientData(const QByteArray& data)
 
 void Server::Send_Main_Data_To_Client(const QString& user_id)
 {
-    this->Send_Accounts_Data(user_id);
+    this->Send_Acc_Exc_Data(user_id);
+    QThread::msleep(20); // Приостановка выполнения на 100 миллисекунд
+    this->Send_Accounts_Data(user_id);    
 }
 
 void Server::Send_Accounts_Data(const QString& user_id)
@@ -312,10 +318,9 @@ void Server::Send_Accounts_Data(const QString& user_id)
     }
 }
 
-void Server::Add_Account_Balance(const QByteArray &data, const QString user_id)
+void Server::Add_Account_Balance(const QByteArray &data, const QString user_id, bool isDeposit)
 {
     QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
-
     if (jsonDoc.isObject()) {
         QJsonObject jsonObj = jsonDoc.object();
 
@@ -323,38 +328,73 @@ void Server::Add_Account_Balance(const QByteArray &data, const QString user_id)
         QString d_account_id = jsonObj.value("account_id").toString();
         QString d_add_balance = jsonObj.value("add_balance").toString();
 
-        qDebug()<<d_account_id;
-
         // Создаем SQL-запрос для добавления данных
         QSqlQuery query;
-        query.prepare("UPDATE investment_accounts SET account_balance = account_balance + :add_balance WHERE account_id = :d_account_id;");
+        if (isDeposit) {
+            query.prepare("UPDATE investment_accounts SET account_balance = account_balance + :add_balance WHERE account_id = :d_account_id;");
+        } else {
+            query.prepare("UPDATE investment_accounts SET account_balance = account_balance - :add_balance WHERE account_id = :d_account_id;");
+        }
         query.bindValue(":add_balance", d_add_balance);
         query.bindValue(":d_account_id", d_account_id);
 
         if (query.exec()) {
             qDebug() << "Data update successfully.";
             QJsonObject rec;
-            rec["type"]= "add_balance";
-            rec["data"]= "Успешное зачисление средств!";
+            rec["type"] = "add_balance";
+            rec["data"] = isDeposit ? "Успешное зачисление средств!" : "Успешное списание средств!";
 
             QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
             QString message = QString::fromUtf8(byte_rec_log_data);
             this->Send_Accounts_Data(user_id);
-            emit receiveAddBalanceFromServer(message);          
-        }
-        else
-        {
+            emit receiveAddBalanceFromServer(message);            
+        } else {
             QJsonObject rec;
-            rec["type"]= "add_balance";
-            rec["data"]= "Ошибка зачисления средств!";
+            rec["type"] = "add_balance";
+            rec["data"] = isDeposit ? "Ошибка зачисления средств!" : "Ошибка списания средств!";
 
             QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
             QString message = QString::fromUtf8(byte_rec_log_data);
-            this->Send_Accounts_Data(user_id);
             emit receiveAddBalanceFromServer(message);
-
         }
     }
+}
+
+void Server::Send_Acc_Exc_Data(const QString &user_id)
+{
+    QSqlQuery query;
+    query.prepare("SELECT * FROM purchased_shares WHERE user_id = :user_id");
+    query.bindValue(":user_id", user_id);
+
+    if(query.exec())
+    {
+        QJsonArray accountArray;
+
+        while(query.next())
+        {
+            QJsonObject accountObject;
+
+            accountObject["PURCHASE_ID"]=query.value("id_purchase").toString();
+            accountObject["SECID"]=query.value("secid").toString();
+            accountObject["LOTS_COUNT"]=query.value("lots_count").toString();
+            accountObject["AVERAGE_PRICE"]=query.value("average_price").toString();
+            accountObject["PURCHASE_DATETIME"]=query.value("purchase_datetime").toString();
+            accountObject["ACCOUNT_ID"] = query.value("account_id").toString();
+
+            accountArray.append(accountObject);
+        }
+
+        // Создаем общий объект JSON для отправки
+        QJsonObject dataObject;
+        dataObject["type"]="show_exch_info";
+        dataObject["data"] = QJsonValue(accountArray);
+
+        QByteArray byte_rec_log_data = QJsonDocument(dataObject).toJson();
+        QString message = QString::fromUtf8(byte_rec_log_data);
+
+        emit send_exch_data(message);
+    }
+
 }
 
 void Server::handleMOEXResponse(const QJsonDocument &jsonDocument)
@@ -411,7 +451,7 @@ void Server::handleMOEXResponse(const QJsonDocument &jsonDocument)
                             data = rowValue.toString();
                         }
 
-                        qDebug() << "Column: " << columnName << ", Data: " << data;
+                        //qDebug() << "Column: " << columnName << ", Data: " << data;
                         securities_array[columnName]=data;
                     }
                 }
@@ -469,7 +509,7 @@ void Server::handleMOEXResponse(const QJsonDocument &jsonDocument)
                                 data = rowValue.toString();
                             }
 
-                            qDebug() << "Column: " << columnName << ", Data: " << data;
+                            //qDebug() << "Column: " << columnName << ", Data: " << data;
                             marketdata_array[columnName]=data;
                         }
                     }
@@ -554,7 +594,7 @@ void Server::handleMOEXResponseUp(const QJsonDocument &jsonDocument)
                             data = rowValue.toString();
                         }
 
-                        qDebug() << "Column: " << columnName << ", Data: " << data;
+                        //qDebug() << "Column: " << columnName << ", Data: " << data;
                         marketdata_array[columnName]=data;
                     }
                 }
@@ -577,3 +617,144 @@ void Server::handleRequestErrorUp(const QString &errorMessage)
     // Обработка ошибки подключения
     qDebug() << "Request Error: " << errorMessage;
 }
+
+void Server::Purchase_Exchange(const QByteArray& data, const QString user_id, bool isDeposit)
+{
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+    if (jsonDoc.isObject()) {
+        QJsonObject jsonObj = jsonDoc.object();
+
+        // Извлекаем значения из JSON
+        QString account_id = jsonObj.value("account_id").toString();
+        QString count_of_lots = jsonObj.value("count_of_lots").toString();
+        QString secid = jsonObj.value("secid").toString();
+        QString price = jsonObj.value("price").toString();
+        QString add_balance = jsonObj.value("add_balance").toString();
+
+        // Создаем SQL-запрос для добавления данных
+        QSqlQuery query;
+        if (!isDeposit) {
+            query.prepare("UPDATE investment_accounts SET account_balance = account_balance + :add_balance WHERE account_id = :d_account_id;");
+        } else {
+            query.prepare("UPDATE investment_accounts SET account_balance = account_balance - :add_balance WHERE account_id = :d_account_id;");
+        }
+        query.bindValue(":add_balance", add_balance);
+        query.bindValue(":d_account_id", account_id);
+
+        if (query.exec()) {
+            qDebug() << "Acc Data update successfully.";
+        }
+
+
+        QSqlQuery checkQuery;
+        checkQuery.prepare("SELECT COUNT(*) FROM purchased_shares WHERE secid = :secid AND account_id = :account_id");
+        checkQuery.bindValue(":secid", secid);
+        checkQuery.bindValue(":account_id", account_id);
+        if (!checkQuery.exec()) {
+            // Обработка ошибки запроса
+            QJsonObject rec;
+            rec["type"] = "rec_purch";
+            rec["data"] = "Ошибка при выполнении запроса проверки наличия бумаги.";
+            QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
+            QString message = QString::fromUtf8(byte_rec_log_data);
+            emit receivePurchaseExchangeFromServer(message);
+            qDebug() << "Ошибка при выполнении запроса проверки наличия бумаги:" << checkQuery.lastError().text();
+            return;
+        }
+
+        if (checkQuery.next()) {
+            int rowCount = checkQuery.value(0).toInt();
+            if (rowCount == 0) {
+                // Бумаги с указанным secid не существует, создаем новую запись
+                QSqlQuery insertQuery;
+                insertQuery.prepare("INSERT INTO purchased_shares (id_purchase,secid, lots_count, average_price, purchase_datetime, account_id, user_id) "
+                                    "VALUES (:id_purchase, :secid, :lots_count, :average_price,:purchase_datetime, :account_id, :user_id)");
+                QString uuid = QUuid::createUuid().toString();
+                uuid = uuid.mid(1, 36);
+
+                insertQuery.bindValue((":id_purchase"), uuid);
+                insertQuery.bindValue(":secid", secid);
+                insertQuery.bindValue(":lots_count", count_of_lots);
+                insertQuery.bindValue(":average_price", price);
+                insertQuery.bindValue(":purchase_datetime", QDateTime::currentDateTime());
+                insertQuery.bindValue(":account_id", account_id);
+                insertQuery.bindValue(":user_id", user_id);
+                if (!insertQuery.exec()) {
+                    // Обработка ошибки запроса
+                    QJsonObject rec;
+                    rec["type"] = "rec_purch";
+                    rec["data"] = "Ошибка при создании новой записи бумаги.";
+                    QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
+                    QString message = QString::fromUtf8(byte_rec_log_data);
+                    emit receivePurchaseExchangeFromServer(message);
+                    qDebug() << "Ошибка при выполнении запроса создания новой записи бумаги:" << insertQuery.lastError().text();
+                    return;
+                }
+            } else {
+                // Бумага с указанным secid уже существует, обновляем счет
+                QSqlQuery updateQuery;
+                QSqlQuery selectQuery;
+                selectQuery.prepare("SELECT lots_count, average_price FROM purchased_shares WHERE secid = :secid AND account_id = :account_id");
+                selectQuery.bindValue(":secid", secid);
+                selectQuery.bindValue(":account_id", account_id);
+                if (selectQuery.exec() && selectQuery.next()) {
+                    double lotsCount = selectQuery.value("lots_count").toDouble();
+                    double averagePrice = selectQuery.value("average_price").toDouble();
+
+                    if (isDeposit) {
+                        lotsCount += count_of_lots.toDouble();
+                        averagePrice = ((averagePrice * lotsCount) + (price.toDouble() * count_of_lots.toDouble())) / (lotsCount + count_of_lots.toDouble());
+                    } else {
+                        if (lotsCount - count_of_lots.toDouble() == 0.0) {
+                            averagePrice = 0.0;
+                        } else {
+                            averagePrice = ((averagePrice * lotsCount) - (price.toDouble() * count_of_lots.toDouble())) / (lotsCount - count_of_lots.toDouble());
+                        }
+                        lotsCount -= count_of_lots.toDouble();
+                    }
+
+                    updateQuery.prepare("UPDATE purchased_shares SET lots_count = :new_lots_count, average_price = :new_average_price "
+                                        "WHERE secid = :secid AND account_id = :account_id");
+
+                    updateQuery.bindValue(":new_lots_count", lotsCount);
+                    updateQuery.bindValue(":new_average_price", averagePrice);
+                    updateQuery.bindValue(":secid", secid);
+                    updateQuery.bindValue(":account_id", account_id);
+                    qDebug() << "SQL Query:" << updateQuery.lastQuery();
+
+                    if (!updateQuery.exec()) {
+                        // Обработка ошибки запроса
+                        QJsonObject rec;
+                        rec["type"] = "rec_purch";
+                        rec["data"] = isDeposit ? "Ошибка при покупке!" : "Ошибка при продаже!";
+                        QJsonDocument jsonDoc(rec);
+                        QString jsonData = jsonDoc.toJson();
+                        emit receivePurchaseExchangeFromServer(jsonData);
+                        return;
+                    }
+                }
+            }
+
+            // Успешное выполнение запроса
+            QJsonObject rec;
+            rec["type"] = "rec_purch";
+            rec["data"] = isDeposit ? "Успешная покупка!" : "Успешная продажа!";
+
+            QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
+            QString message = QString::fromUtf8(byte_rec_log_data);
+
+            emit receivePurchaseExchangeFromServer(message);
+        } else {
+            // Обработка случая, когда результат запроса пустой
+            QJsonObject rec;
+            rec["type"] = "rec_purch";
+            rec["data"] = "Ошибка при выполнении запроса проверки наличия бумаги.";
+            QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
+            QString message = QString::fromUtf8(byte_rec_log_data);
+
+            emit receivePurchaseExchangeFromServer(message);
+            qDebug() << "Ошибка при выполнении запроса проверки наличия бумаги: результат запроса пустой";
+        }
+    }
+}
+

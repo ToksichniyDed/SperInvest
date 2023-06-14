@@ -13,6 +13,7 @@ SperInvestWindow::SperInvestWindow(Client* client,QHash<QString, account_info>* 
     connect(ui->push_account,&QPushButton::clicked,this,&SperInvestWindow::onCreate_Account_ButtonClicked);//Кнопка создания счета
     connect(ui->confirm_button,&QPushButton::clicked,this,&SperInvestWindow::on_confirm_exchange_button_clicked);//Кнопка вывода информации о бумаге
     connect(s_client,&Client::send_to_Show_Accounts, this,&SperInvestWindow::Show_Accounts);//Поле вывода счетов
+
     connect(s_client, &Client::send_to_Show_Exchange, this, &SperInvestWindow::Show_Exchange_Issuer);//Поле вывода акций
     connect(s_client,&Client::clear_accounts_window,this,&SperInvestWindow::clear_show_accounts_window);//Удаление кнопок счетов
     connect(s_client,&Client::send_acc_info,this, &SperInvestWindow::set_account_info_hash);// Передаем счета клиента
@@ -53,6 +54,15 @@ void SperInvestWindow::onCreate_Account_ButtonClicked()
 
 void SperInvestWindow::clear_show_accounts_window()
 {
+    QTabWidget* tabWidget = ui->acc_info_tab;
+    int tabCount = tabWidget->count();
+
+    // Удаление вкладок, начиная с индекса 1
+    for (int i = tabCount - 1; i > 0; --i) {
+        QWidget* tab = tabWidget->widget(i);
+        tabWidget->removeTab(i);
+        delete tab;
+    }
     QVBoxLayout* layout = qobject_cast<QVBoxLayout*>(ui->scrollAreaWidgetContents->layout());
     QLayoutItem* item;
     while ((item = layout->takeAt(0)) != nullptr) {
@@ -62,20 +72,42 @@ void SperInvestWindow::clear_show_accounts_window()
         delete item;
     }
     ui->accounts_balance->clear();
+    ui->current_balance->clear();
 }
 
 void SperInvestWindow::Show_Accounts(QString* acc_id)
 {
     // Вывод общего баланса
-    double sum_balance = ui->accounts_balance->text().toDouble();
+    long double sum_balance_of_user = ui->accounts_balance->text().toDouble();
+
+    long double sum_balance_of_acc = 0;
 
     account_info acc_info = (*acc_info_hash).value(*acc_id);
 
-    sum_balance += acc_info.get_account_balance().toDouble();
-    QString formatted_balance = QString::number(sum_balance, 'f', 2);
+    QHash<QString, purchase> *purchaseHash = s_client->get_purhase_hash();
+
+    foreach (purchase purch, purchaseHash->values())
+    {
+        QString acc_id_p = purch.getACCOUNT_ID();
+
+        if (acc_id_p == acc_info.get_account_id())
+        {
+            sum_balance_of_acc += purch.getLOTS().toInt()*purch.getAVERAGE_PRICE().toDouble();
+        }
+    }
+
+    sum_balance_of_acc += acc_info.get_account_balance().toDouble();
+
+    sum_balance_of_user += acc_info.get_account_balance().toDouble();
+    std::string stringValue = std::to_string(sum_balance_of_user);
+    QString formatted_balance = QString::fromStdString(stringValue);
     ui->accounts_balance->setText(formatted_balance);
+    stringValue = std::to_string(sum_balance_of_acc);
+    QString formatted_acc_balance = QString::fromStdString(stringValue);
+    ui->current_balance->setText(formatted_acc_balance);
 
     QString accountName = acc_info.get_account_name();
+    QString accountId = acc_info.get_account_id();
 
     // Создание кнопки
     QPushButton* button = new QPushButton(accountName);
@@ -88,20 +120,22 @@ void SperInvestWindow::Show_Accounts(QString* acc_id)
 
     // Создание вкладки
     QTabWidget* tabWidget = findChild<QTabWidget*>("acc_info_tab"); // Получение указателя на QTabWidget из главного окна
-    account_info_widget* acc_info_widget = new account_info_widget(s_client, tabWidget, &acc_info);
+    account_info_widget* acc_info_widget = new account_info_widget(s_client,accountId,tabWidget, &acc_info);
     tabWidget->addTab(acc_info_widget, accountName);
     tabWidget->setStyleSheet("QTabBar::tab { height: 0px; width: 0px; }");
     tabWidget->setCurrentIndex(tabWidget->count()-1);
     ui->current_account->setText(accountName);
 
     connect(button, &QPushButton::clicked, this, [=]() {
-        activateTabByText(tabWidget, accountName);
+        activateTabByText(tabWidget, accountName,formatted_acc_balance);
     });
 }
 
-void SperInvestWindow::activateTabByText(QTabWidget* tabWidget, const QString& tabText)
+void SperInvestWindow::activateTabByText(QTabWidget* tabWidget, const QString& tabText,const QString& sum)
 {
     ui->current_account->setText(tabText);
+    ui->current_balance->setText(sum);
+
     for (int i = 0; i < tabWidget->count(); ++i) {
         if (tabWidget->tabText(i) == tabText) {
             tabWidget->setCurrentIndex(i);
@@ -187,3 +221,4 @@ void SperInvestWindow::on_confirm_exchange_button_clicked()
 
     s_client->sendMessage(jsonData);
 }
+

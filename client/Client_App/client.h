@@ -9,10 +9,13 @@
 #include <QJsonValue>
 #include <QCoreApplication>
 #include <QHash>
+#include <QTimer>
+#include <queue>
 
 #include "account_info.h"
 #include "exchange_data.h"
 #include "marketdata_info.h"
+#include "purchase.h"
 
 class Client : public QObject
 {
@@ -27,7 +30,10 @@ public:
     void Create_Acc_WindowSubmit(const QJsonObject& data);//получение данных из формы создания счета
     QHash<QString, account_info>* get_acc_hash();
     QHash<QString, exchange_data>* get_exchange_hash();
+    QHash<QString, marketdata_info>* get_market_hash();
+    QHash<QString, purchase>* get_purhase_hash();
     void AddBalanceWindow(const QJsonObject& data);
+    void GetBalanceWindow(const QJsonObject& data);
 
 private slots:
     void readServerData();
@@ -47,6 +53,7 @@ signals:
     void send_marketdata_info(QHash<QString, marketdata_info>* marketdata_hash);
     void update_marketdata_field(marketdata_info* marketdata_info2);
     void rec_add_money_window(QString message);
+    void receivePurchaseExchangeSuccess(QString message);
 
 private:
     QTcpSocket* tcpSocket;
@@ -54,6 +61,7 @@ private:
     QHash <QString,account_info> account_hash;
     QHash <QString,exchange_data> exchange_hash;
     QHash <QString,marketdata_info> marketdata_hash;
+    QHash <QString, purchase> purchase_hash;
 };
 
 #endif // CLIENT_H

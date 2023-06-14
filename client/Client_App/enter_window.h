@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QPropertyAnimation>
 
 #include "ui_enter_window.h"
 #include "registration_window.h"

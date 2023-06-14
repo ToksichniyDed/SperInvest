@@ -8,6 +8,7 @@
 #include "exchange_data.h"
 #include "client.h"
 #include "marketdata_info.h"
+#include "buy_exchange.h"
 
 namespace Ui {
 class exchange_widget;
@@ -22,6 +23,7 @@ public:
     ~exchange_widget();
     void setExchangeData();
     void setMarketdataData(marketdata_info* marketdata_info2);
+    void onBuy_Exch_ButtonClicked();//Покупка акций
 
 private:
     Client* ex_client;

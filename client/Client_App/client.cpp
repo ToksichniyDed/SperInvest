@@ -65,12 +65,14 @@ void Client::readServerData()
     else if(messageType == "acc")
     {
         QString message = dataValue.toString();
+
         emit close_create_acc_window(message);
         QJsonObject rec;
         rec["type"]= "update_acc";
         rec["data"] = "";
         QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
         QString update = QString::fromUtf8(byte_rec_log_data);
+
         this->sendMessage(update);
     }
     else if(messageType == "show_acc")
@@ -106,12 +108,13 @@ void Client::readServerData()
         }
         else
         {
-            //emit send_to_Show_Accounts(dataValue);
+            qDebug()<<"Ошибка показывания счетов!";
         }
     }
     else if(messageType == "add_balance")
     {
         QString message = dataValue.toString();
+
         emit rec_add_money_window(message);
     }
     else if (messageType == "exchange_data")
@@ -300,6 +303,35 @@ void Client::readServerData()
             emit update_marketdata_field(&marketdata_data);
         }
     }
+    else if (messageType == "rec_purch") {
+        QString message = messageData["data"].toString();
+        emit receivePurchaseExchangeSuccess(message);
+     }
+    else if(messageType == "show_exch_info")
+    {
+        if (dataValue.isArray())
+        {
+            purchase_hash.clear();
+
+            QJsonArray purchaseArray = dataValue.toArray();
+
+            for (const QJsonValue& purchaseValue : purchaseArray)
+            {
+
+                if (purchaseValue.isObject())
+                {
+                    QJsonObject purchaseObject = purchaseValue.toObject();
+
+                    QString purchase_id = purchaseObject["PURCHASE_ID"].toString();
+
+                    purchase purch (purchaseObject["PURCHASE_ID"].toString(),purchaseObject["SECID"].toString(),purchaseObject["LOTS_COUNT"].toString(),
+                                   purchaseObject["AVERAGE_PRICE"].toString(),purchaseObject["PURCHASE_DATETIME"].toString(),purchaseObject["ACCOUNT_ID"].toString());
+
+                    purchase_hash.insert(purchase_id,purch);
+                }
+            }
+        }
+    }
     else
     {
         qDebug()<<"Recieve from server!";
@@ -353,19 +385,19 @@ void Client::displayError(QAbstractSocket::SocketError socketError)
     switch (socketError) {
     case QAbstractSocket::RemoteHostClosedError:
         qDebug() << "Error: The remote host closed the connection.";
-        QMessageBox::critical(nullptr, "Ошибка подключения", "Не удалось подключиться к серверу.");
+        QMessageBox::information(nullptr, "Ошибка подключения", "Не удалось подключиться к серверу.");
         break;
     case QAbstractSocket::HostNotFoundError:
         qDebug() << "Error: Host not found.";
-        QMessageBox::critical(nullptr, "Ошибка подключения", "Не удалось подключиться к серверу.");
+        QMessageBox::information(nullptr, "Ошибка подключения", "Не удалось подключиться к серверу.");
         break;
     case QAbstractSocket::ConnectionRefusedError:
         qDebug() << "Error: The connection was refused by the peer.";
-        QMessageBox::critical(nullptr, "Ошибка подключения", "Не удалось подключиться к серверу.");
+        QMessageBox::information(nullptr, "Ошибка подключения", "Не удалось подключиться к серверу.");
         break;
     case QAbstractSocket::SocketTimeoutError:
         qDebug() << "Error: Socket operation timed out.";
-        QMessageBox::critical(nullptr, "Ошибка подключения", "Не удалось подключиться к серверу.");
+        QMessageBox::information(nullptr, "Ошибка подключения", "Не удалось подключиться к серверу.");
         break;
     default:
         qDebug() << "Error: " << tcpSocket->errorString();
@@ -397,8 +429,28 @@ void Client::AddBalanceWindow(const QJsonObject &data)
     this->sendMessage(jsonData);
 }
 
+void Client::GetBalanceWindow(const QJsonObject &data)
+{
+    // Добавляем тип данных "acc" в объект JSON
+    QJsonObject messageData;
+    messageData["type"] = "get_balance";
+    messageData["data"] = data;
 
+    // Преобразование объекта в строку JSON
+    QJsonDocument jsonDoc(messageData);
+    QString jsonData = jsonDoc.toJson();
 
+    this->sendMessage(jsonData);
+}
 
+QHash<QString, marketdata_info>* Client::get_market_hash()
+{
+    return &marketdata_hash;
+}
+
+QHash<QString, purchase>* Client::get_purhase_hash()
+{
+    return &purchase_hash;
+}
 
 
