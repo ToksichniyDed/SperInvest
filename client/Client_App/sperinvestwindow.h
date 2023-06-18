@@ -25,7 +25,11 @@ public:
     void onCreate_Account_ButtonClicked();//Кнопка создания нового счета
     void Show_Accounts(QString *acc_id);//Окно вывода счетов
     void clear_show_accounts_window();//Очистка окна счетов
+    void clear_history_purchase_layout();
+    void clear_money_history_layout();
     void Show_Account_Info();//Информация о счете
+    void Show_Money_History(QString amount = "", QString transferDate = "",bool isDeposit = true, QString accountId = "");//Историй денежных операций
+    void Show_Purchase_History(QString secid,int lots_count, bool is_deposit,QString purchase_datetime,QString  account_id,double all_sum,double average_price);//История сделок
     void activateTabByText(QTabWidget* tabWidget, const QString& tabText,const QString& sum);
     void set_account_info_hash(QHash<QString, account_info>* acc_info_hash);
     void set_exchange_info_hash(QHash<QString, exchange_data>* exchange_info);
@@ -37,6 +41,8 @@ public:
 private:
     Ui::SperInvestWindow *ui;
     Client* s_client;
+    QVBoxLayout* vLayout;
+    QVBoxLayout* Layout;
     QHash<QString, account_info>* acc_info_hash;
     QHash<QString, exchange_data>* exchange_info_hash;
     QHash<QString, marketdata_info>* marketdata_info_hash;

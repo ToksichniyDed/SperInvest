@@ -5,6 +5,7 @@ exch_tab::exch_tab(QWidget *parent) :
     ui(new Ui::exch_tab)
 {
     ui->setupUi(this);
+    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 }
 
 exch_tab::~exch_tab()

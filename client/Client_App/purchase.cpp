@@ -1,9 +1,8 @@
 #include "purchase.h"
 
-purchase::purchase(QString PURCHASE_ID, QString SECID, QString LOTS, QString AVERAGE_PRICE, QString PURCHASE_DATETIME, QString ACCOUNT_ID)
-    : PURCHASE_ID(PURCHASE_ID),SECID(SECID), LOTS(LOTS), AVERAGE_PRICE(AVERAGE_PRICE), PURCHASE_DATETIME(PURCHASE_DATETIME), ACCOUNT_ID(ACCOUNT_ID)
+purchase::purchase(QString PURCHASE_ID, QString SECID, QString LOTS, QString LOTSIZE, QString AVERAGE_PRICE, QString PURCHASE_DATETIME, QString ACCOUNT_ID)
+    : PURCHASE_ID(PURCHASE_ID),SECID(SECID), LOTS(LOTS), LOTSIZE(LOTSIZE),AVERAGE_PRICE(AVERAGE_PRICE), PURCHASE_DATETIME(PURCHASE_DATETIME), ACCOUNT_ID(ACCOUNT_ID)
 {
-    qDebug()<<"Create: "<<SECID<<" from "<< ACCOUNT_ID;
 }
 
 QString purchase::getPURCHASE_ID()
@@ -36,6 +35,16 @@ void purchase::setLOTS( QString &value)
     LOTS = value;
 }
 
+QString purchase::getLOTSIZE()
+{
+    return LOTSIZE;
+}
+
+void purchase::setLOTSIZE( QString &value)
+{
+    LOTSIZE = value;
+}
+
 QString purchase::getAVERAGE_PRICE()
 {
     return AVERAGE_PRICE;
@@ -65,3 +74,4 @@ void purchase::setACCOUNT_ID( QString &value)
 {
     ACCOUNT_ID = value;
 }
+

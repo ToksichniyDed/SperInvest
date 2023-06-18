@@ -35,15 +35,17 @@ void account_info_widget::Show_Exch_Info()
     QTabWidget* tab = ui->page_2->findChild<exch_tab*>("exch_tab");
     QHash<QString, purchase> *purchaseHash = a_client->get_purhase_hash();
 
+    tab->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
     foreach (purchase purch, purchaseHash->values())
     {
         QString target_acc_id = purch.getACCOUNT_ID();
 
         if (acc_id == target_acc_id)
         {
-            // acc_id счета совпадает, выполняем необходимые действия
             QString purchaseName = purch.getSECID();
             exch* exch_info = new exch(a_client,acc_id,&purch,tab);
+            exch_info->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
             tab->addTab(exch_info, purchaseName);
             tab->setStyleSheet("QTabBar::tab{ height: 20px; width: 60px; }");
             tab->setCurrentIndex(1);

@@ -62,25 +62,30 @@ void Server::handleNewConnection()
 void Server::Connections_Signals(ClientHandler* clientHandler, QThread* clientThread)
 {
     // Подключаем сигналы и слоты на получение данных
-    connect(clientHandler, &ClientHandler::sendRegDataToServer, this, &Server::registrationClientData);//Получение регистрационных данных
-    connect(clientHandler,&ClientHandler::sendLogDataToServer,this,&Server::loginClientData);// Получение авторизационных данных
-    connect(clientHandler,&ClientHandler::sendCreate_Acc_DataToServer,this,&Server::Create_Acc_ClientData);// Получение данных для создания счета
-    connect(clientHandler,&ClientHandler::update_accounts_data,this,&Server::Send_Accounts_Data);//Обновление информации о счетах
-    connect(clientHandler, &ClientHandler::send_to_add_balance,this, &Server::Add_Account_Balance);// Зачислить деньги на счет
-    connect(clientHandler, &ClientHandler::purchase_exchange, this, &Server::Purchase_Exchange);// Зачисляем приобритение акций на счет.
-    connect(clientHandler, &ClientHandler::update_acc_purch_data, this, &Server::Send_Main_Data_To_Client);
+    connect(clientHandler, &ClientHandler::sendRegDataToServer, this, &Server::registrationClientData, Qt::UniqueConnection);//Получение регистрационных данных
+    connect(clientHandler,&ClientHandler::sendLogDataToServer,this,&Server::loginClientData, Qt::UniqueConnection);// Получение авторизационных данных
+    connect(clientHandler,&ClientHandler::sendCreate_Acc_DataToServer,this,&Server::Create_Acc_ClientData, Qt::UniqueConnection);// Получение данных для создания счета
+    connect(clientHandler,&ClientHandler::update_accounts_data,this,&Server::Send_Accounts_Data, Qt::UniqueConnection);//Обновление информации о счетах
+    connect(clientHandler,&ClientHandler::update_accounts_data,this,&Server::Send_Money_History_Data, Qt::UniqueConnection);//Обновление информации о счетах
+    connect(clientHandler, &ClientHandler::send_to_add_balance,this, &Server::Add_Account_Balance, Qt::UniqueConnection);// Зачислить деньги на счет
+    connect(clientHandler, &ClientHandler::purchase_exchange, this, &Server::Purchase_Exchange, Qt::UniqueConnection);// Зачисляем приобритение акций на счет.
+    connect(clientHandler, &ClientHandler::update_acc_purch_data, this, &Server::Send_Main_Data_To_Client, Qt::UniqueConnection);
+    connect(clientHandler, &ClientHandler::update_acc_purch_data, this, &Server::Send_History_Data, Qt::UniqueConnection);
 
-    connect(clientThread, &QThread::finished, clientThread, &QThread::deleteLater);
+
+    connect(clientThread, &QThread::finished, clientThread, &QThread::deleteLater, Qt::UniqueConnection);
 
     // Подключаем сигналы и слоты на отправку данных
-    connect(this, &Server::receiveLogDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения авторизации
-    connect(this, &Server::receiveRegDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения регистрации
-    connect(this, &Server::receiveAccDataFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения/отклонения создания счета
-    connect(this, &Server::send_accounts_data, clientHandler, &ClientHandler::sendMessage);// Отправка данных о счете
-    connect(this, &Server::set_ID,clientHandler,&ClientHandler::set_Id);//Установка user_id
-    connect(this, &Server::receiveAddBalanceFromServer,clientHandler,&ClientHandler::sendMessage);//Отправка подтверждения пополнения счета
-    connect(this, &Server::receivePurchaseExchangeFromServer, clientHandler, &ClientHandler::sendMessage);//Отправка подтверждения операции с бумагами
-    connect(this, &Server::send_exch_data, clientHandler, &ClientHandler::sendMessage);//Отправка данных о ценных бумагах на счете
+    connect(this, &Server::receiveLogDataFromServer, clientHandler, &ClientHandler::sendMessage, Qt::UniqueConnection);//Отправка подтверждения/отклонения авторизации
+    connect(this, &Server::receiveRegDataFromServer, clientHandler, &ClientHandler::sendMessage, Qt::UniqueConnection);//Отправка подтверждения/отклонения регистрации
+    connect(this, &Server::receiveAccDataFromServer, clientHandler, &ClientHandler::sendMessage, Qt::UniqueConnection);//Отправка подтверждения/отклонения создания счета
+    connect(this, &Server::send_accounts_data, clientHandler, &ClientHandler::sendMessage, Qt::UniqueConnection);// Отправка данных о счете
+    connect(this, &Server::set_ID,clientHandler,&ClientHandler::set_Id, Qt::UniqueConnection);//Установка user_id
+    connect(this, &Server::receiveAddBalanceFromServer,clientHandler,&ClientHandler::sendMessage, Qt::UniqueConnection);//Отправка подтверждения пополнения счета
+    connect(this, &Server::receivePurchaseExchangeFromServer, clientHandler, &ClientHandler::sendMessage, Qt::UniqueConnection);//Отправка подтверждения операции с бумагами
+    connect(this, &Server::send_exch_data, clientHandler, &ClientHandler::sendMessage, Qt::UniqueConnection);//Отправка данных о ценных бумагах на счете
+    connect(this, &Server::send_money_history, clientHandler, &ClientHandler::sendMessage, Qt::UniqueConnection);//Отправка истории денежных операций
+    connect(this, &Server::send_purchase_history, clientHandler, &ClientHandler::sendMessage, Qt::UniqueConnection);//Отправка истории сделок
 }
 
 void Server::registrationClientData(const QByteArray& data)
@@ -186,7 +191,6 @@ void Server::loginClientData(const QByteArray& data)
                     if (query.exec() && query.next())
                         user_id = query.value(0).toString();
                     emit set_ID(user_id);
-                    this->Send_Main_Data_To_Client(user_id);
                 }
             }
         }
@@ -201,6 +205,12 @@ void Server::loginClientData(const QByteArray& data)
     QString message = QString::fromUtf8(byte_rec_log_data);
 
     emit receiveLogDataFromServer(message);
+
+    if(access)
+    {
+        this->Send_Main_Data_To_Client(user_id);
+        this->Send_History_Data(user_id);
+    }
 }
 
 void Server::Create_Acc_ClientData(const QByteArray& data)
@@ -221,12 +231,19 @@ void Server::Create_Acc_ClientData(const QByteArray& data)
 
         // Создаем SQL-запрос для добавления данных
         QSqlQuery query;
-        query.prepare("INSERT INTO investment_accounts (account_id, account_name,account_balance,currency,open_date,status,user_id,created_at,tariff_plan)" "VALUES (:account_id, :account_name, :account_balance, :currency, :open_date, :status, :user_id, :created_at,:tariff_plan)");
+        query.prepare("INSERT INTO investment_accounts (account_id, account_name,account_balance,currency,open_date,status,user_id,created_at,tariff_plan)"
+                      "VALUES (:account_id, :account_name, :account_balance, :currency, :open_date, :status, :user_id, :created_at,:tariff_plan)");
+
+        QSqlQuery query2;
+        query2.prepare("INSERT INTO money_transfers_history(transfer_id, user_id, amount, transfer_date, is_deposit, account_id)"
+                       "VALUES (:transfer_id, :user_id, :amount, :transfer_date, :is_deposit, :account_id)");
+
 
         QString uuid = QUuid::createUuid().toString();
         uuid = uuid.mid(1, 36);
 
         query.bindValue(":account_id", uuid);
+        query2.bindValue(":account_id", uuid);
         query.bindValue(":account_name", d_acc_name);
         query.bindValue(":account_balance", d_startbalance);
         query.bindValue(":currency", d_currency);
@@ -236,7 +253,16 @@ void Server::Create_Acc_ClientData(const QByteArray& data)
         query.bindValue(":user_id", d_user_id);
         query.bindValue(":tariff_plan", d_tariffplan);
 
-        if (query.exec()) {
+        uuid = QUuid::createUuid().toString();
+        uuid = uuid.mid(1, 36);
+
+        query2.bindValue(":transfer_id",uuid);
+        query2.bindValue(":user_id",d_user_id);
+        query2.bindValue(":amount",d_startbalance);
+        query2.bindValue(":transfer_date",QDateTime::currentDateTime());
+        query2.bindValue(":is_deposit", true);
+
+        if (query.exec() && query2.exec()) {
             qDebug() << "Data inserted successfully.";
             QJsonObject rec;
             rec["type"]= "acc";
@@ -254,6 +280,8 @@ void Server::Create_Acc_ClientData(const QByteArray& data)
             rec["type"]= "acc";
             rec["data"]= "Неудачное создание счета";
 
+            qDebug()<<query2.lastError().text()<<query.lastError().text();
+
             QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
             QString message = QString::fromUtf8(byte_rec_log_data);
 
@@ -265,8 +293,13 @@ void Server::Create_Acc_ClientData(const QByteArray& data)
 void Server::Send_Main_Data_To_Client(const QString& user_id)
 {
     this->Send_Acc_Exc_Data(user_id);
-    QThread::msleep(20); // Приостановка выполнения на 100 миллисекунд
-    this->Send_Accounts_Data(user_id);    
+    this->Send_Accounts_Data(user_id);
+}
+
+void Server::Send_History_Data(const QString& user_id)
+{
+    this->Send_Money_History_Data(user_id);
+    this->Send_Purchase_History_Data(user_id);
 }
 
 void Server::Send_Accounts_Data(const QString& user_id)
@@ -330,15 +363,32 @@ void Server::Add_Account_Balance(const QByteArray &data, const QString user_id, 
 
         // Создаем SQL-запрос для добавления данных
         QSqlQuery query;
+        QSqlQuery query2;
         if (isDeposit) {
             query.prepare("UPDATE investment_accounts SET account_balance = account_balance + :add_balance WHERE account_id = :d_account_id;");
+            query2.prepare("INSERT INTO money_transfers_history(transfer_id, user_id, amount, transfer_date, is_deposit, account_id)"
+                           "VALUES (:transfer_id, :user_id, :amount, :transfer_date, :is_deposit, :account_id)");
+            query2.bindValue(":is_deposit", true);
+
         } else {
             query.prepare("UPDATE investment_accounts SET account_balance = account_balance - :add_balance WHERE account_id = :d_account_id;");
+            query2.prepare("INSERT INTO money_transfers_history(transfer_id, user_id, amount, transfer_date, is_deposit, account_id)"
+                           "VALUES (:transfer_id, :user_id, :amount, :transfer_date, :is_deposit, :account_id)");
+            query2.bindValue(":is_deposit", false);
         }
         query.bindValue(":add_balance", d_add_balance);
         query.bindValue(":d_account_id", d_account_id);
 
-        if (query.exec()) {
+        QString uuid = QUuid::createUuid().toString();
+        uuid = uuid.mid(1, 36);
+
+        query2.bindValue(":transfer_id",uuid);
+        query2.bindValue(":user_id",user_id);
+        query2.bindValue(":amount",d_add_balance);
+        query2.bindValue(":transfer_date",QDateTime::currentDateTime());
+        query2.bindValue(":account_id", d_account_id);
+
+        if (query.exec() && query2.exec()) {
             qDebug() << "Data update successfully.";
             QJsonObject rec;
             rec["type"] = "add_balance";
@@ -346,9 +396,9 @@ void Server::Add_Account_Balance(const QByteArray &data, const QString user_id, 
 
             QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
             QString message = QString::fromUtf8(byte_rec_log_data);
-            this->Send_Accounts_Data(user_id);
-            emit receiveAddBalanceFromServer(message);            
+            emit receiveAddBalanceFromServer(message);
         } else {
+            qDebug()<<query.lastError().text()<<":"<<query2.lastError().text();
             QJsonObject rec;
             rec["type"] = "add_balance";
             rec["data"] = isDeposit ? "Ошибка зачисления средств!" : "Ошибка списания средств!";
@@ -380,6 +430,7 @@ void Server::Send_Acc_Exc_Data(const QString &user_id)
             accountObject["AVERAGE_PRICE"]=query.value("average_price").toString();
             accountObject["PURCHASE_DATETIME"]=query.value("purchase_datetime").toString();
             accountObject["ACCOUNT_ID"] = query.value("account_id").toString();
+            accountObject["LOTSIZE"]= query.value("lotsize").toString();
 
             accountArray.append(accountObject);
         }
@@ -394,7 +445,101 @@ void Server::Send_Acc_Exc_Data(const QString &user_id)
 
         emit send_exch_data(message);
     }
+}
 
+void Server::Send_Money_History_Data(const QString &user_id)
+{
+    QSqlQuery query;
+    query.prepare("SELECT * FROM money_transfers_history WHERE user_id = :user_id");
+    query.bindValue(":user_id", user_id);
+
+    if (query.exec()) {
+        QJsonArray transferArray;
+
+        while (query.next()) {
+            QJsonObject transferObject;
+            transferObject["amount"] = query.value("amount").toString();
+            transferObject["transfer_date"] = query.value("transfer_date").toString();
+            transferObject["is_deposit"] = query.value("is_deposit").toBool();
+            transferObject["account_id"] = query.value("account_id").toString();
+
+            transferArray.append(transferObject);
+        }
+
+        // Создаем общий объект JSON для отправки
+        QJsonObject dataObject;
+        dataObject["type"] = "show_transfers";
+        dataObject["data"] = QJsonValue(transferArray);
+
+        // Преобразуем объект JSON в строку
+        QByteArray byte_rec_log_data = QJsonDocument(dataObject).toJson();
+        QString message = QString::fromUtf8(byte_rec_log_data);
+
+
+        emit send_money_history(message);
+    }
+    else {
+        qDebug() << "Error executing SQL query: " << query.lastError().text();
+
+        QJsonObject dataObject;
+        dataObject["type"] = "show_transfers";
+        dataObject["data"] = "";
+
+        QByteArray byte_rec_log_data = QJsonDocument(dataObject).toJson();
+        QString message = QString::fromUtf8(byte_rec_log_data);
+
+
+        emit send_money_history(message);
+    }
+}
+
+void Server::Send_Purchase_History_Data(const QString &user_id)
+{
+
+    QSqlQuery query;
+    query.prepare("SELECT * FROM purchased_history WHERE user_id = :user_id");
+    query.bindValue(":user_id", user_id);
+
+    if (query.exec()) {
+        QJsonArray historyArray;
+
+        while (query.next()) {
+            QJsonObject historyObject;
+            historyObject["secid"] = query.value("secid").toString();
+            historyObject["lots_count"] = query.value("lots_count").toInt();
+            historyObject["average_price"] = query.value("average_price").toDouble();
+            historyObject["purchase_datetime"] = query.value("purchase_datetime").toString();
+            historyObject["account_id"] = query.value("account_id").toString();
+            historyObject["all_sum"]= query.value("all_sum").toDouble();
+            historyObject["is_deposit"]=query.value("is_deposit").toBool();
+
+            historyArray.append(historyObject);
+        }
+
+        // Создаем общий объект JSON для отправки
+        QJsonObject dataObject;
+        dataObject["type"] = "show_history";
+        dataObject["data"] = QJsonValue(historyArray);
+
+        QByteArray byte_rec_log_data = QJsonDocument(dataObject).toJson();
+        QString message = QString::fromUtf8(byte_rec_log_data);
+
+
+        emit send_purchase_history(message);
+    }
+    else {
+        qDebug() << "Error executing SQL query: " << query.lastError().text();
+
+        QJsonObject dataObject;
+        dataObject["type"] = "show_history";
+        dataObject["data"] = "";
+
+        QByteArray byte_rec_log_data = QJsonDocument(dataObject).toJson();
+        QString message = QString::fromUtf8(byte_rec_log_data);
+
+
+        emit send_purchase_history(message);
+    }
 }
 
 void Server::handleMOEXResponse(const QJsonDocument &jsonDocument)
@@ -627,6 +772,7 @@ void Server::Purchase_Exchange(const QByteArray& data, const QString user_id, bo
         // Извлекаем значения из JSON
         QString account_id = jsonObj.value("account_id").toString();
         QString count_of_lots = jsonObj.value("count_of_lots").toString();
+        QString lotsize = jsonObj.value("lotsize").toString();
         QString secid = jsonObj.value("secid").toString();
         QString price = jsonObj.value("price").toString();
         QString add_balance = jsonObj.value("add_balance").toString();
@@ -667,14 +813,15 @@ void Server::Purchase_Exchange(const QByteArray& data, const QString user_id, bo
             if (rowCount == 0) {
                 // Бумаги с указанным secid не существует, создаем новую запись
                 QSqlQuery insertQuery;
-                insertQuery.prepare("INSERT INTO purchased_shares (id_purchase,secid, lots_count, average_price, purchase_datetime, account_id, user_id) "
-                                    "VALUES (:id_purchase, :secid, :lots_count, :average_price,:purchase_datetime, :account_id, :user_id)");
+                insertQuery.prepare("INSERT INTO purchased_shares (id_purchase,secid, lots_count, lotsize, average_price, purchase_datetime, account_id, user_id) "
+                                    "VALUES (:id_purchase, :secid, :lots_count,:lotsize, :average_price,:purchase_datetime, :account_id, :user_id)");
                 QString uuid = QUuid::createUuid().toString();
                 uuid = uuid.mid(1, 36);
 
                 insertQuery.bindValue((":id_purchase"), uuid);
                 insertQuery.bindValue(":secid", secid);
                 insertQuery.bindValue(":lots_count", count_of_lots);
+                insertQuery.bindValue(":lotsize", lotsize);
                 insertQuery.bindValue(":average_price", price);
                 insertQuery.bindValue(":purchase_datetime", QDateTime::currentDateTime());
                 insertQuery.bindValue(":account_id", account_id);
@@ -735,6 +882,34 @@ void Server::Purchase_Exchange(const QByteArray& data, const QString user_id, bo
                 }
             }
 
+            QSqlQuery inserthQuery;
+            inserthQuery.prepare("INSERT INTO purchased_history (id_purchase,secid, lots_count, average_price, purchase_datetime, account_id, user_id, all_sum, is_deposit) "
+                                 "VALUES (:id_purchase, :secid, :lots_count, :average_price,:purchase_datetime, :account_id, :user_id, :all_sum, :is_deposit)");
+            QString uuid = QUuid::createUuid().toString();
+            uuid = uuid.mid(1, 36);
+
+            inserthQuery.bindValue((":id_purchase"), uuid);
+            inserthQuery.bindValue(":secid", secid);
+            inserthQuery.bindValue(":lots_count", count_of_lots);
+            inserthQuery.bindValue(":average_price", price);
+            inserthQuery.bindValue(":purchase_datetime", QDateTime::currentDateTime());
+            inserthQuery.bindValue(":account_id", account_id);
+            inserthQuery.bindValue(":user_id", user_id);
+            inserthQuery.bindValue(":all_sum", add_balance);
+            inserthQuery.bindValue(":is_deposit", isDeposit);
+
+            if (!inserthQuery.exec()) {
+                // Обработка ошибки запроса
+                QJsonObject rec;
+                rec["type"] = "rec_purch";
+                rec["data"] = "Ошибка при создании новой записи бумаги.";
+                QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
+                QString message = QString::fromUtf8(byte_rec_log_data);
+                emit receivePurchaseExchangeFromServer(message);
+                qDebug() << "Ошибка при выполнении запроса создания истории покупок:" << inserthQuery.lastError().text();
+            }
+
+
             // Успешное выполнение запроса
             QJsonObject rec;
             rec["type"] = "rec_purch";
@@ -742,7 +917,6 @@ void Server::Purchase_Exchange(const QByteArray& data, const QString user_id, bo
 
             QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
             QString message = QString::fromUtf8(byte_rec_log_data);
-
             emit receivePurchaseExchangeFromServer(message);
         } else {
             // Обработка случая, когда результат запроса пустой
@@ -753,6 +927,7 @@ void Server::Purchase_Exchange(const QByteArray& data, const QString user_id, bo
             QString message = QString::fromUtf8(byte_rec_log_data);
 
             emit receivePurchaseExchangeFromServer(message);
+
             qDebug() << "Ошибка при выполнении запроса проверки наличия бумаги: результат запроса пустой";
         }
     }

@@ -7,9 +7,7 @@ exchange_widget::exchange_widget(QWidget *parent,Client* ex_client,exchange_data
     this->setExchangeData();
 
     connect(ex_client, &Client::update_marketdata_field, this, &exchange_widget::setMarketdataData);
-    connect(ui->buy_exchange, &QPushButton::clicked, [this]() {
-        onBuy_Exch_ButtonClicked();
-    });
+    connect(ui->buy_exchange,&QPushButton::clicked, this, &exchange_widget::onBuy_Exch_ButtonClicked);
 }
 
 exchange_widget::~exchange_widget()
@@ -74,6 +72,7 @@ void exchange_widget::setMarketdataData(marketdata_info* marketdata_info2)
 void exchange_widget::onBuy_Exch_ButtonClicked()
 {
     QString secid = ui->SECID->text();
-    buy_exchange* buy_exchange_window = new buy_exchange(ex_client,secid,0,0,this);
+    buy_exchange* buy_exchange_window = new buy_exchange(ex_client,secid,0,0,0,this);
+    buy_exchange_window->setWindowTitle(secid);
     buy_exchange_window->exec();
 }

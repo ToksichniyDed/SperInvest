@@ -18,7 +18,7 @@ class buy_exchange : public QDialog
     Q_OBJECT
 
 public:
-    explicit buy_exchange(Client* buy_client = nullptr,QString secid = "", float result_sum = 0.0,float price = 0.0, QWidget *parent = nullptr);
+    explicit buy_exchange(Client* buy_client = nullptr,QString secid = "", float result_sum = 0.0,float price = 0.0, int lotssize = 0,QWidget *parent = nullptr);
     ~buy_exchange();
     void receivePurchaseExchange(QString message);
 
@@ -28,6 +28,7 @@ private:
     QString secid;
     float result_sum;
     float price;
+    int lotssize;
 
 signals:
     void send_buy_exchange_information(const QString& message);

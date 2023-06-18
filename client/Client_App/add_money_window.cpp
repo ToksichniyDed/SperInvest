@@ -12,7 +12,6 @@ add_money_window::add_money_window(Client* add_client, QString acc_id, QWidget *
 add_money_window::~add_money_window()
 {
     disconnect(ui->back_button,&QPushButton::clicked,this,&add_money_window::onbackbutton);
-    disconnect(ui->confirm_add,&QPushButton::clicked,this,&add_money_window::onconfirmbutton);
     delete ui;
 }
 

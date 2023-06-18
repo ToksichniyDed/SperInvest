@@ -55,8 +55,14 @@ void create_account::check_create_acc_data()
 
 void create_account::close_window(QString message)
 {
-    qDebug()<<message;
     QMessageBox::information(this,"Поздравляю", message);
+    QJsonObject rec;
+    rec["type"]= "update_acc";
+    rec["data"] = "";
+    QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
+    QString update = QString::fromUtf8(byte_rec_log_data);
+
+    c_client->sendMessage(update);
     disconnect(c_client,&Client::close_create_acc_window,this,&create_account::close_window);
     this->close();
 }

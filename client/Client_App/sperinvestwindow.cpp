@@ -16,9 +16,13 @@ SperInvestWindow::SperInvestWindow(Client* client,QHash<QString, account_info>* 
 
     connect(s_client, &Client::send_to_Show_Exchange, this, &SperInvestWindow::Show_Exchange_Issuer);//Поле вывода акций
     connect(s_client,&Client::clear_accounts_window,this,&SperInvestWindow::clear_show_accounts_window);//Удаление кнопок счетов
+    connect(s_client, &Client::clear_history_money, this, &SperInvestWindow::clear_money_history_layout);
+    connect(s_client, &Client::clear_purch_history, this, &SperInvestWindow::clear_history_purchase_layout);
     connect(s_client,&Client::send_acc_info,this, &SperInvestWindow::set_account_info_hash);// Передаем счета клиента
     connect(s_client,&Client::send_exchange_info,this,&SperInvestWindow::set_exchange_info_hash);//Передаем даннные с MOEX
     connect(s_client,&Client::send_marketdata_info,this,&SperInvestWindow::set_marketdata_info);
+    connect(s_client,&Client::show_money_history, this, &SperInvestWindow::Show_Money_History);//История операций
+    connect(s_client, &Client::show_purchase_history, this, &SperInvestWindow::Show_Purchase_History);//История сделок
     QTabWidget* tabWidget = findChild<QTabWidget*>("exchange_info");
     connect(tabWidget, &QTabWidget::tabCloseRequested, this, &SperInvestWindow::closeTab);// Кнопка закрытия вкладок о Акции
 
@@ -27,6 +31,16 @@ SperInvestWindow::SperInvestWindow(Client* client,QHash<QString, account_info>* 
     layout->setAlignment(Qt::AlignTop);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
+
+    vLayout = new QVBoxLayout;
+    vLayout->setAlignment(Qt::AlignTop);
+    vLayout->setContentsMargins(0, 0, 0, 0);
+    vLayout->setSpacing(0);
+
+    Layout = new QVBoxLayout;
+    Layout->setAlignment(Qt::AlignTop);
+    Layout->setContentsMargins(0, 0, 0, 0);
+    Layout->setSpacing(0);
 
     // Установка созданного макета в scrollAreaWidgetContents
     ui->scrollAreaWidgetContents->setLayout(layout);
@@ -39,6 +53,7 @@ SperInvestWindow::SperInvestWindow(Client* client,QHash<QString, account_info>* 
     // Открываем модальное диалоговое окно
     enterwindow->setModal(true);
     enterwindow->exec();
+
 }
 
 SperInvestWindow::~SperInvestWindow()
@@ -75,6 +90,38 @@ void SperInvestWindow::clear_show_accounts_window()
     ui->current_balance->clear();
 }
 
+void SperInvestWindow::clear_history_purchase_layout()
+{
+    QLayoutItem* item;
+
+    while ((item = Layout->takeAt(0)) != nullptr)
+    {
+        QWidget* widget = item->widget();
+        if (widget)
+        {
+            Layout->removeWidget(widget);
+            delete widget; // Удаление элемента
+        }
+        //delete item; // Удаление объекта QLayoutItem
+    }
+}
+
+void SperInvestWindow::clear_money_history_layout()
+{
+    QLayoutItem* item;
+
+    while ((item = vLayout->takeAt(0)) != nullptr)
+    {
+        QWidget* widget = item->widget();
+        if (widget)
+        {
+            vLayout->removeWidget(widget);
+            delete widget; // Удаление элемента
+        }
+        //delete item; // Удаление объекта QLayoutItem
+    }
+}
+
 void SperInvestWindow::Show_Accounts(QString* acc_id)
 {
     // Вывод общего баланса
@@ -92,7 +139,7 @@ void SperInvestWindow::Show_Accounts(QString* acc_id)
 
         if (acc_id_p == acc_info.get_account_id())
         {
-            sum_balance_of_acc += purch.getLOTS().toInt()*purch.getAVERAGE_PRICE().toDouble();
+            sum_balance_of_acc += purch.getLOTS().toInt()*purch.getAVERAGE_PRICE().toDouble()*purch.getLOTSIZE().toDouble();
         }
     }
 
@@ -129,6 +176,84 @@ void SperInvestWindow::Show_Accounts(QString* acc_id)
     connect(button, &QPushButton::clicked, this, [=]() {
         activateTabByText(tabWidget, accountName,formatted_acc_balance);
     });
+}
+
+void SperInvestWindow::Show_Money_History(QString amount, QString transferDate, bool isDeposit, QString accountId)
+{
+    QScrollArea* moneyHistoryScrollArea = findChild<QScrollArea*>("money_history");
+    QWidget* scrollAreaContents = moneyHistoryScrollArea->findChild<QWidget*>("scrollAreaWidgetContents_3");
+
+    QString acc_name = "";
+    QString acc_currency = "";
+
+    if (acc_info_hash->contains(accountId)) {
+
+        account_info info = acc_info_hash->value(accountId);
+        acc_name = info.get_account_name();
+        acc_currency = info.get_currency();
+    }
+    QString formattedAmount = QString("%1").arg(amount.toDouble(), 0, 'f', 2); // Форматирование суммы
+
+    QString transferType = isDeposit ? "Зачисление средств" : "Вывод средств"; // Тип операции
+    QString transferType1 = isDeposit ? "на счет" : "со счета";
+    QString transferText = QString("%1 %2 %3 %4: %5, %6")
+                               .arg(transferType)
+                               .arg(formattedAmount)
+                               .arg(acc_currency)
+                               .arg(transferType1)
+                               .arg(acc_name)
+                               .arg(transferDate);
+    QLineEdit* lineEdit = new QLineEdit(scrollAreaContents);
+    lineEdit->setText(transferText);
+    lineEdit->setReadOnly(true);
+    vLayout->addWidget(lineEdit);
+    scrollAreaContents->setLayout(vLayout);
+}
+
+void SperInvestWindow::Show_Purchase_History(QString secid,int lots_count, bool is_deposit,QString purchase_datetime,QString  account_id,double all_sum,double average_price)
+{
+    QScrollArea* purchaseHistoryScrollArea = findChild<QScrollArea*>("purchase_history");
+    QWidget* scrollAreaContents = purchaseHistoryScrollArea->findChild<QWidget*>("scrollAreaWidgetContents_2");
+
+    QString transferType = is_deposit ? "Покупка" : "Продажа"; // Тип операции
+        QString secid_name = "";
+    QString secid_currency = "";
+    QString lotsize = "";
+
+    QString acc_name = "";
+    QString acc_currency = "";
+
+    if (acc_info_hash->contains(account_id)) {
+
+        account_info info = acc_info_hash->value(account_id);
+        acc_name = info.get_account_name();
+        acc_currency = info.get_currency();
+    }
+
+    if (exchange_info_hash->contains(secid)) {
+
+        exchange_data info = exchange_info_hash->value(secid);
+        secid_name = info.getSHORTNAME();
+        secid_currency = info.getCURRENCYID();
+        lotsize = info.getLOTSIZE();
+    }
+
+    QString transferText = QString("%1 : %2 -> %3 %4 лотов (%5 акций в лоте) по средней цене %6 на сумму %7 %8 %9.")
+                               .arg(acc_name)
+                               .arg(secid)
+                               .arg(transferType)
+                               .arg(lots_count)
+                               .arg(lotsize)
+                               .arg(average_price)
+                               .arg(all_sum)
+                               .arg(acc_currency)
+                               .arg(purchase_datetime);
+
+    QLineEdit* lineEdit = new QLineEdit(scrollAreaContents);
+    lineEdit->setText(transferText);
+    lineEdit->setReadOnly(true);
+    Layout->addWidget(lineEdit);
+    scrollAreaContents->setLayout(Layout);
 }
 
 void SperInvestWindow::activateTabByText(QTabWidget* tabWidget, const QString& tabText,const QString& sum)

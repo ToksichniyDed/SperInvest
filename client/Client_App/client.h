@@ -11,6 +11,7 @@
 #include <QHash>
 #include <QTimer>
 #include <queue>
+#include <QQueue>
 
 #include "account_info.h"
 #include "exchange_data.h"
@@ -34,9 +35,10 @@ public:
     QHash<QString, purchase>* get_purhase_hash();
     void AddBalanceWindow(const QJsonObject& data);
     void GetBalanceWindow(const QJsonObject& data);
+    void queueMessage();
 
 private slots:
-    void readServerData();
+    void readServerData(QByteArray rec_data);
     void displayError(QAbstractSocket::SocketError socketError);
     void connected();
 
@@ -47,7 +49,11 @@ signals:
     void close_create_acc_window(QString message);
     void send_to_Show_Accounts(QString* acc_id);
     void send_to_Show_Exchange(QString exch_id);
+    void show_money_history(QString amount, QString transferDate,bool isDeposit, QString accountId);
+    void show_purchase_history(QString secid,int lots_count, bool is_deposit,QString purchase_datetime,QString  account_id,double all_sum,double average_price);
     void clear_accounts_window();
+    void clear_history_money();
+    void clear_purch_history();
     void send_acc_info(QHash<QString, account_info>* account_hash);
     void send_exchange_info(QHash<QString,exchange_data>* exchange_hash);
     void send_marketdata_info(QHash<QString, marketdata_info>* marketdata_hash);
@@ -56,6 +62,7 @@ signals:
     void receivePurchaseExchangeSuccess(QString message);
 
 private:
+    QQueue<QByteArray> queue;
     QTcpSocket* tcpSocket;
     QString m_user_id;
     QHash <QString,account_info> account_hash;

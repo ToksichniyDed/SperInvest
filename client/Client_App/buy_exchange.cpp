@@ -1,7 +1,7 @@
 #include "buy_exchange.h"
 
-buy_exchange::buy_exchange(Client* buy_client, QString secid, float result_sum, float price, QWidget *parent) :
-    QDialog(parent), buy_client(buy_client), secid(secid), result_sum(result_sum),price(price),
+buy_exchange::buy_exchange(Client* buy_client, QString secid, float result_sum, float price,int lotssize, QWidget *parent) :
+    QDialog(parent), buy_client(buy_client), secid(secid), result_sum(result_sum),price(price),lotssize(lotssize),
     ui(new Ui::buy_exchange)
 {
     ui->setupUi(this);
@@ -26,6 +26,8 @@ buy_exchange::~buy_exchange()
     disconnect(ui->count_lots, &QLineEdit::textChanged, this, &buy_exchange::onFirstLineEditTextChanged);
     disconnect(ui->buy_but, &QPushButton::clicked, this, &buy_exchange::onBuyButton);
     disconnect(this, &buy_exchange::send_buy_exchange_information, buy_client,&Client::sendMessage);
+    disconnect(buy_client, &Client::receivePurchaseExchangeSuccess, this, &buy_exchange::receivePurchaseExchange);
+
     delete ui;
 }
 
@@ -50,6 +52,7 @@ void buy_exchange::onFirstLineEditTextChanged(const QString& text)
         if (exchangeHash->contains(this->secid)) {
             exchange_data exchangeData = exchangeHash->value(secid);
             lotsize = exchangeData.getLOTSIZE();
+            lotssize = lotsize.toInt();
         }
 
         // Поиск значения в marketdata_hash
@@ -98,6 +101,9 @@ void buy_exchange::onBuyButton()
                     int temp = ui->count_lots->text().toInt();
                     messageData["count_of_lots"] = QString::number(temp);
                     messageData["price"]= QString::number(this->price);
+                    messageData["lotssize"]= QString::number(this->lotssize);
+
+                    qDebug()<<"LOT: "<<QString::number(this->lotssize);
 
                     // Преобразование объекта в строку JSON
                     QJsonDocument jsonDoc(messageData);

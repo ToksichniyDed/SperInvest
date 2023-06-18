@@ -1,10 +1,11 @@
 #include "client.h"
+#include <QThread>
 
 Client::Client(QObject *parent) : QObject(parent)
 {
     tcpSocket = new QTcpSocket(this);
 
-    connect(tcpSocket, &QTcpSocket::readyRead, this, &Client::readServerData);
+    connect(tcpSocket, &QTcpSocket::readyRead, this, &Client::queueMessage);
     connect(tcpSocket, &QTcpSocket::errorOccurred, this, &Client::displayError);
 }
 
@@ -34,12 +35,21 @@ void Client::sendMessage(const QString& message)
 
 }
 
-void Client::readServerData()
+void Client::queueMessage()
 {
-    QByteArray rec_data = tcpSocket->readAll();
+    QByteArray message = tcpSocket->readAll();
+    //qDebug()<<message;
+    queue.enqueue(message);
+    QTimer::singleShot(50, std::bind(&Client::readServerData, this, queue.dequeue()));
+}
+
+void Client::readServerData(QByteArray rec_data)
+{   
     QJsonObject messageData = QJsonDocument::fromJson(rec_data).object();
     QString messageType = messageData["type"].toString();
     QJsonValue dataValue = messageData["data"];
+
+    qDebug()<<messageType;
 
     //Передача данных на сервер
     if (messageType == "msg")
@@ -67,13 +77,6 @@ void Client::readServerData()
         QString message = dataValue.toString();
 
         emit close_create_acc_window(message);
-        QJsonObject rec;
-        rec["type"]= "update_acc";
-        rec["data"] = "";
-        QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
-        QString update = QString::fromUtf8(byte_rec_log_data);
-
-        this->sendMessage(update);
     }
     else if(messageType == "show_acc")
     {
@@ -81,6 +84,7 @@ void Client::readServerData()
         {
             account_hash.clear();
             emit clear_accounts_window();
+            emit clear_history_money();
             QJsonArray accountArray = dataValue.toArray();
 
             for (const QJsonValue& accountValue : accountArray)
@@ -116,6 +120,15 @@ void Client::readServerData()
         QString message = dataValue.toString();
 
         emit rec_add_money_window(message);
+
+        emit close_create_acc_window(message);
+        QJsonObject rec;
+        rec["type"]= "update_acc";
+        rec["data"] = "";
+        QByteArray byte_rec_log_data = QJsonDocument(rec).toJson();
+        QString update = QString::fromUtf8(byte_rec_log_data);
+
+        this->sendMessage(update);
     }
     else if (messageType == "exchange_data")
     {
@@ -306,13 +319,13 @@ void Client::readServerData()
     else if (messageType == "rec_purch") {
         QString message = messageData["data"].toString();
         emit receivePurchaseExchangeSuccess(message);
-     }
+    }
     else if(messageType == "show_exch_info")
     {
         if (dataValue.isArray())
         {
             purchase_hash.clear();
-
+            emit clear_purch_history();
             QJsonArray purchaseArray = dataValue.toArray();
 
             for (const QJsonValue& purchaseValue : purchaseArray)
@@ -324,11 +337,48 @@ void Client::readServerData()
 
                     QString purchase_id = purchaseObject["PURCHASE_ID"].toString();
 
-                    purchase purch (purchaseObject["PURCHASE_ID"].toString(),purchaseObject["SECID"].toString(),purchaseObject["LOTS_COUNT"].toString(),
+                    purchase purch (purchaseObject["PURCHASE_ID"].toString(),purchaseObject["SECID"].toString(),purchaseObject["LOTS_COUNT"].toString(),purchaseObject["LOTSIZE"].toString(),
                                    purchaseObject["AVERAGE_PRICE"].toString(),purchaseObject["PURCHASE_DATETIME"].toString(),purchaseObject["ACCOUNT_ID"].toString());
 
                     purchase_hash.insert(purchase_id,purch);
                 }
+            }
+        }
+    }
+    else if(messageType == "show_transfers")
+    {
+        if (dataValue.isArray()){
+            QJsonArray transferArray = dataValue.toArray();
+
+            for (int i = 0; i < transferArray.size(); ++i) {
+                QJsonObject transferObj = transferArray[i].toObject();
+
+                QString amount = transferObj["amount"].toString();
+                QString transferDate = transferObj["transfer_date"].toString();
+                bool isDeposit = transferObj["is_deposit"].toBool();
+                QString accountId = transferObj["account_id"].toString();
+
+                emit show_money_history (amount, transferDate, isDeposit, accountId);
+            }
+        }
+    }
+    else if(messageType == "show_history")
+    {
+        if (dataValue.isArray()){
+            QJsonArray exch_buyArray = dataValue.toArray();
+
+            for (int i = 0; i < exch_buyArray.size(); ++i) {
+                QJsonObject exch_buyObj = exch_buyArray[i].toObject();
+
+                QString secid = exch_buyObj["secid"].toString();
+                int lots_count = exch_buyObj["lots_count"].toInt();
+                bool is_deposit = exch_buyObj["is_deposit"].toBool();
+                QString purchase_datetime = exch_buyObj["purchase_datetime"].toString();
+                QString account_id = exch_buyObj["account_id"].toString();
+                double all_sum = exch_buyObj["all_sum"].toDouble();
+                double average_price = exch_buyObj["average_price"].toDouble();
+
+                emit show_purchase_history(secid,lots_count,is_deposit,purchase_datetime, account_id, all_sum, average_price);
             }
         }
     }

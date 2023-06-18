@@ -6,6 +6,8 @@
 #include <QThread>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QCryptographicHash>
+#include <QQueue>
 
 class ClientHandler : public QObject
 {
@@ -25,6 +27,8 @@ private:
     QTcpSocket *clientSocket;
     QThread* thread;
     QString m_user_id;
+    QQueue<QByteArray> queue;
+    QQueue<QString> queue_s;
 
 signals:
     void sendRegDataToServer(const QByteArray& data);

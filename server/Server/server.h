@@ -33,7 +33,10 @@ public:
     void Create_Acc_ClientData(const QByteArray& data);
     void Send_Main_Data_To_Client(const QString& user_id);
     void Send_Accounts_Data(const QString& user_id);
+    void Send_History_Data(const QString& user_id);
     void Send_Acc_Exc_Data(const QString& user_id);
+    void Send_Money_History_Data(const QString& user_id);
+    void Send_Purchase_History_Data(const QString& user_id);
     void Add_Account_Balance(const QByteArray& data, const QString user_id,bool isDeposit);
     void Purchase_Exchange(const QByteArray& data, const QString user_id, bool isDeposit);
     void handleMOEXResponse(const QJsonDocument &jsonDocument);
@@ -54,6 +57,8 @@ signals:
 
     void send_accounts_data(const QString& message);
     void send_exch_data(const QString& message);
+    void send_money_history(const QString& message);
+    void send_purchase_history(const QString& message);
     void set_ID(const QString& user_id);
 };
 
